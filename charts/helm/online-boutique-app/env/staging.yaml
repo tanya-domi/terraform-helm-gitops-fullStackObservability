@@ -1,0 +1,15 @@
+global:
+  configMapName: online-boutique-dev-configmap
+  
+  redis:
+    address: "10.113.0.4:6379" # Staging Memorystore IP
+
+  features:
+    enableTracing: "true"
+    enable_profiler: "false"
+
+  ingress:
+    host: staging.tanyadominicsheytech.eu  # Staging subdomain
+    annotations:
+      kubernetes.io/ingress.global-static-ip-name: "online-boutique-dev-ip"
+      networking.gke.io/managed-certificates: "boutique-dev-ssl-cert"

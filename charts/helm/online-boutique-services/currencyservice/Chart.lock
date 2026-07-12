@@ -1,0 +1,6 @@
+dependencies:
+- name: online-boutique-common
+  repository: oci://us-central1-docker.pkg.dev/project-1cdbea51-6334-4e02-967/helm-charts
+  version: 0.1.17
+digest: sha256:499d3d8e32fdec0e2fb12c23e7c2619513b25ad59d8cb6b5833ebb473a623ac3
+generated: "2026-07-05T15:16:24.0820349+02:00"

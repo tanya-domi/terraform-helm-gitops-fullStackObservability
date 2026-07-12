@@ -1,0 +1,22 @@
+---
+global:
+  nodeSelector:
+    role: "monitoring"
+  tolerations:
+    - key: "dedicated"
+      operator: "Equal"
+      value: "monitoring"
+      effect: "NoSchedule"
+
+configs:
+  params:
+    server.insecure: true
+
+repoServer:
+  serviceAccount:
+    create: true
+    name: argocd-repo-server
+    namespace: argocd
+    annotations:
+      iam.gke.io/gcp-service-account: argocd-repo-server-sa@project-1cdbea51-6334-4e02-967.iam.gserviceaccount.com
+     

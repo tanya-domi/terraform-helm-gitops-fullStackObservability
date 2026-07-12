@@ -1,0 +1,79 @@
+deploymentName: adservice-deployment
+serviceName: adservice
+
+appLabel: adservice
+appName: adservice
+jobLabel: adservice
+
+replicaCount: 1
+
+image:
+  repository: us-central1-docker.pkg.dev/project-1cdbea51-6334-4e02-967/app-images/adservice
+  tag: "v0.1.19"
+  pullPolicy: IfNotPresent
+
+terminationGracePeriodSeconds: 5
+
+annotations:
+  instrumentation.opentelemetry.io/inject-java: "app-instrumentation"
+
+containers:
+  - name: server
+    ports:
+      - containerPort: 9555
+    env:
+      - name: PORT
+        value: "9555"
+      - name: OTEL_SERVICE_NAME
+        value: "adservice"
+      - name: OTEL_LOGS_EXPORTER
+        value: "otlp"
+      - name: OTEL_LOG_LEVEL
+        value: "info"
+      - name: OTEL_JAVAAGENT_LOGGING
+        value: "application"
+      # This forces the agent to inject the IDs into Log4j2
+      - name: OTEL_INSTRUMENTATION_LOG4J_APPENDER_ENABLED
+        value: "true"
+      
+
+    readinessProbe:
+      initialDelaySeconds: 60
+      periodSeconds: 15
+      grpc:
+        port: 9555
+
+    livenessProbe:
+      initialDelaySeconds: 60
+      periodSeconds: 15
+      grpc:
+        port: 9555
+
+    # resources:
+    #   requests:
+    #     cpu: 200m
+    #     memory: 256Mi
+    #   limits:
+    #     cpu: 500m
+    #     memory: 512Mi
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 180Mi
+      limits:
+        cpu: 300m
+        memory: 300Mi
+
+service:
+  enabled: true
+  type: ClusterIP
+  name: grpc
+  port: 9555
+  targetPort: 9555
+
+serviceAccount:
+  create: true
+  name: adservice
+
+profiler_enabled: "false"

@@ -1,0 +1,68 @@
+deploymentName: productcatalogservice-deployment
+serviceName: productcatalogservice
+
+appLabel: productcatalogservice
+appName: productcatalogservice
+jobLabel: productcatalogservice
+
+replicaCount: 1
+
+image:
+  repository: us-central1-docker.pkg.dev/project-1cdbea51-6334-4e02-967/app-images/productcatalogservice
+  tag: "v0.1.20"
+  pullPolicy: IfNotPresent
+
+
+annotations:
+  instrumentation.opentelemetry.io/inject-go: app-instrumentation
+  instrumentation.opentelemetry.io/otel-go-auto-target-exe: "/src/server"
+  resource.opentelemetry.io/service.name: "productcatalogservice"
+
+shareProcessNamespace: true
+containers:
+  - name: server
+    ports:
+      - containerPort: 3550
+    securityContext:
+          privileged: true
+    env:
+      - name: PORT
+        value: "3550"
+      - name: DISABLE_PROFILER
+        value: "1"
+    
+
+    readinessProbe:
+      grpc:
+        port: 3550
+    livenessProbe:
+      grpc:
+        port: 3550
+    # resources:
+    #   requests:
+    #     cpu: 100m
+    #     memory: 64Mi
+    #   limits:
+    #     cpu: 200m
+    #     memory: 128Mi
+
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+
+service:
+  enabled: true
+  type: ClusterIP
+  name: grpc
+  port: 3550
+  targetPort: 3550
+
+serviceAccount:
+  create: true
+  name: "productcatalogservice"
+
+profiler_enabled: "false"

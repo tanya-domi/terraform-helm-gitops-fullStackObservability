@@ -1,0 +1,84 @@
+deploymentName: checkoutservice-deployment
+serviceName: checkoutservice
+
+appLabel: checkoutservice
+appName: checkoutservice
+jobLabel: checkoutservice
+
+replicaCount: 1
+
+image:
+  repository: us-central1-docker.pkg.dev/project-1cdbea51-6334-4e02-967/app-images/checkoutservice
+  tag: "v0.1.21"
+  pullPolicy: IfNotPresent
+  # imagePullSecrets:
+  #   - name: my-registry-key
+
+annotations:
+  instrumentation.opentelemetry.io/inject-go: "app-instrumentation"
+  instrumentation.opentelemetry.io/otel-go-auto-target-exe: "/src/checkoutservice"
+  resource.opentelemetry.io/service.name: "checkoutservice"
+
+shareProcessNamespace: true
+containers:
+  - name: server
+    ports:
+      - containerPort: 5050
+    securityContext:
+          privileged: true
+    env:
+      - name: PORT
+        value: "5050"
+      - name: PRODUCT_CATALOG_SERVICE_ADDR
+        value: "productcatalogservice:3550"
+      - name: SHIPPING_SERVICE_ADDR
+        value: "shippingservice:50051"
+      - name: PAYMENT_SERVICE_ADDR
+        value: "paymentservice:50051"
+      - name: EMAIL_SERVICE_ADDR
+        value: "emailservice:5000"
+      - name: CURRENCY_SERVICE_ADDR
+        value: "currencyservice:7000"
+      - name: CART_SERVICE_ADDR
+        value: "cartservice:7070"
+   
+    readinessProbe:
+      grpc:
+        port: 5050
+    livenessProbe:
+      grpc:
+        port: 5050
+        
+    # resources:
+    #   requests:
+    #     cpu: 100m
+    #     memory: 64Mi
+    #   limits:
+    #     cpu: 200m
+    #     memory: 128Mi
+
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+
+service:
+  enabled: true
+  type: ClusterIP
+  name: grpc
+  port: 5050
+  targetPort: 5050
+
+serviceAccount:
+  create: true
+  name: "checkoutservice"
+
+profiler_enabled: "false"
+
+
+podDisruptionBudget:
+  enabled: false # Default is off
+  minAvailable: 1

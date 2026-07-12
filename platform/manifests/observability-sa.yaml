@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: thanos-tempo-sa
+  namespace: monitoring
+  annotations:
+    # Explicitly map back up to your Terraform-constructed GSA identity safely
+    iam.gke.io/gcp-service-account: "dev-observability-storage-sa@project-1cdbea51-6334-4e02-967.iam.gserviceaccount.com"

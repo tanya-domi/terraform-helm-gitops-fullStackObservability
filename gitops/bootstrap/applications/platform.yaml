@@ -1,0 +1,40 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: platform-infrastructure
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io # Dynamic cleanup if deleted
+spec:
+  project: default
+  sources:
+    # Source 1: Upstream Helm Chart Registry for ESO
+    - repoURL: 'https://charts.external-secrets.io'
+      chart: external-secrets
+      targetRevision: 0.9.11
+      helm:
+        releaseName: external-secrets
+        valuesObject:
+          installCRDs: true
+          serviceAccount:
+            create: true
+            name: "external-secrets-sa"
+            annotations:
+              iam.gke.io/gcp-service-account: "eso-gcp-sa@project-1cdbea51-6334-4e02-967.iam.gserviceaccount.com"
+
+    # Source 2: Your Local Platform Configuration Directory (ClusterSecretStore, etc.)
+    - repoURL: 'https://github.com/tanya-domi/terraform-helm-gitops-fullStackObservability' # <-- Update to your remote Git URL
+      targetRevision: HEAD
+      path: gitops/platform
+
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: external-secrets
+
+  syncPolicy:
+    automated:
+      prune: true     # Automatically deletes resources removed from Git
+      selfHeal: true  # Overwrites manual changes made in the K8s cluster
+    createNamespace: true
+    syncOptions:
+      - CreateNamespace=true

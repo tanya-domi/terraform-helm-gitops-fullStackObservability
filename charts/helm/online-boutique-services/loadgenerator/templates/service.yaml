@@ -1,0 +1,3 @@
+{{- if .Values.service.enabled -}}
+{{- template "common.service" . -}}
+{{- end -}}

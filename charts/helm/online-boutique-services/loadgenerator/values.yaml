@@ -1,0 +1,96 @@
+deploymentName: loadgenerator-deployment
+serviceName: loadgenerator
+
+appLabel: loadgenerator
+appName: loadgenerator
+jobLabel: loadgenerator
+
+replicaCount: 1
+
+image:
+  repository: us-central1-docker.pkg.dev/project-1cdbea51-6334-4e02-967/app-images/loadgenerator
+  tag: "v0.1.20"
+  pullPolicy: IfNotPresent
+
+
+annotations:
+  sidecar.istio.io/rewriteAppHTTPProbers: "true"
+
+terminationGracePeriodSeconds: 5
+restartPolicy: Always
+
+securityContext:
+  fsGroup: 1000
+  runAsGroup: 1000
+  runAsNonRoot: true
+  runAsUser: 1000
+
+initContainers:
+  - name: frontend-check
+    image: busybox:latest
+    command:
+      - /bin/sh
+      - -exc
+      - |
+        MAX_RETRIES=12
+        RETRY_INTERVAL=10
+        for i in $(seq 1 $MAX_RETRIES); do
+          echo "Attempt $i: Pinging frontend: ${FRONTEND_ADDR}..."
+          STATUSCODE=$(wget --server-response http://${FRONTEND_ADDR} 2>&1 | awk '/^  HTTP/{print $2}')
+          if [ "$STATUSCODE" -eq 200 ]; then
+            echo "Frontend is reachable."
+            exit 0
+          fi
+          echo "Error: Could not reach frontend - Status code: ${STATUSCODE}"
+          sleep $RETRY_INTERVAL
+        done
+        echo "Failed to reach frontend after $MAX_RETRIES attempts."
+        exit 1
+    env:
+      - name: FRONTEND_ADDR
+        value: "frontend:80"
+    securityContext:
+      allowPrivilegeEscalation: false
+      privileged: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+          - ALL
+
+containers:
+  - name: loadgenerator
+    env:
+      - name: FRONTEND_ADDR
+        value: "frontend:80"
+      - name: USERS
+        value: "10"
+      - name: HATCH_RATE
+        value: "1"
+    # resources:
+    #   requests:
+    #     cpu: 300m
+    #     memory: 256Mi
+    #   limits:
+    #     cpu: 500m
+    #     memory: 512Mi
+
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      privileged: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+          - ALL
+service:
+  enabled: false
+
+serviceAccount:
+  create: true
+  name: loadgenerator

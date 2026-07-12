@@ -1,0 +1,126 @@
+name: Terraform
+
+on:
+  pull_request:
+    paths:
+      - "infra/terraform/**"
+      - ".github/workflows/terraform.yml"
+  push:
+    branches: [main]
+    paths:
+      - "infra/terraform/**"
+      - ".github/workflows/terraform.yml"
+  workflow_dispatch:
+    inputs:
+      stack:
+        description: "bootstrap or foundation"
+        required: true
+        default: foundation
+        type: choice
+        options:
+          - bootstrap
+          - foundation
+      action:
+        description: "plan or apply"
+        required: true
+        default: plan
+        type: choice
+        options:
+          - plan
+          - apply
+
+permissions:
+  contents: read
+  id-token: write         # Crucial: Allows GitHub to request the OIDC token
+  pull-requests: write
+
+env:
+  TF_IN_AUTOMATION: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+
+      - name: Terraform validate (foundation)
+        run: |
+          terraform -chdir=infra/terraform/envs/foundation init -backend=false
+          terraform -chdir=infra/terraform/envs/foundation validate
+
+  plan-apply:
+    if: github.event_name == 'workflow_dispatch' || (github.ref == 'refs/heads/main' && github.event_name == 'push')
+    needs: [validate]
+    runs-on: ubuntu-latest
+    environment: terraform
+    steps:
+      - uses: actions/checkout@v4
+
+      # Uses exactly the two secrets you currently have active in GitHub
+      - name: Authenticate via GCP OIDC Federation
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_TERRAFORM_SA_EMAIL }}
+
+      # Sets up the gcloud authentication ecosystem paths
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+
+      # Automatically derives the app pusher SA name using your project variable info
+      - name: Write CI Terraform variables
+        working-directory: infra/terraform/envs/${{ github.event.inputs.stack || 'foundation' }}
+        env:
+          PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          REGION: ${{ vars.GCP_REGION || 'us-central1' }}
+          TFSTATE_BUCKET: ${{ vars.TFSTATE_BUCKET_NAME || 'tanya-terraform-state' }}
+        run: |
+          set -euo pipefail
+          STACK="${{ github.event.inputs.stack || 'foundation' }}"
+
+          if [ -z "${PROJECT_ID}" ]; then
+            echo "::error::Repository variable GCP_PROJECT_ID is missing! Add it under Settings -> Secrets and variables -> Actions -> Variables."
+            exit 1
+          fi
+
+          # DYNAMIC DERIVATION: Calculates the app pusher account email without a third secret
+          DERIVED_APP_SA="github-actions-app-sa@${PROJECT_ID}.iam.gserviceaccount.com"
+
+          if [ "$STACK" = "bootstrap" ]; then
+            cat > ci.auto.tfvars.json <<EOF
+          {
+            "project_id": "${PROJECT_ID}",
+            "region": "${REGION}",
+            "bucket": "${TFSTATE_BUCKET}"
+          }
+          EOF
+          else
+            cat > ci.auto.tfvars.json <<EOF
+          {
+            "project_id": "${PROJECT_ID}",
+            "region": "${REGION}",
+            "build_ci_sa_email": "${DERIVED_APP_SA}",
+            "promote_ci_sa_email": "${DERIVED_APP_SA}"
+          }
+          EOF
+          fi
+
+          echo "Generated deployment variables successfully for stack: ${STACK}"
+
+      - name: Terraform Run (Init, Plan, Apply)
+        working-directory: infra/terraform/envs/${{ github.event.inputs.stack || 'foundation' }}
+        run: |
+          terraform init -input=false
+          
+          if [ "${{ github.event.inputs.action || 'plan' }}" = "apply" ] && [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            terraform apply -input=false -auto-approve
+          else
+            terraform plan -input=false
+          fi

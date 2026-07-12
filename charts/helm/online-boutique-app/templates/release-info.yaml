@@ -1,0 +1,14 @@
+{{- if .Values.releaseInfo.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.fullname" . }}-release-info
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+data:
+  chartName: {{ .Chart.Name | quote }}
+  chartVersion: {{ .Chart.Version | quote }}
+  releaseName: {{ .Release.Name | quote }}
+  releaseNamespace: {{ .Release.Namespace | quote }}
+  deployedAt: {{ now | date "2006-01-02T15:04:05Z" | quote }}
+{{- end }}

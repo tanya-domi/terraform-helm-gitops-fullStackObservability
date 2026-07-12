@@ -1,0 +1,59 @@
+# Build results
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+*.exe
+*.dll
+*.pdb
+*.cache
+*.log
+*.tmp
+*.temp
+*.db
+*.mdb
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio
+.vs/
+*.vcxproj.user
+*.rsuser
+
+# ASP.NET / .NET Core generated files
+appsettings.Development.json
+*.staticwebassets.endpoints.json
+*.staticwebassets.build.json*
+*.genruntimeconfig.cache
+*.deps.json
+*.runtimeconfig.json
+*.nuget.cache
+project.assets.json
+*.nuget.dgspec.json
+*.nuget.g.props
+*.nuget.g.targets
+
+# Publish output
+publish/
+out/
+dist/
+Release/
+Debug/
+
+# Generated proto/grpc files (if auto-generated)
+**/obj/**/protos/*.cs
+
+# Rider / VS Code / JetBrains
+.idea/
+.vscode/
+
+# Docker / environment
+.env
+docker-compose.override.yml
+
+# OS-specific
+.DS_Store
+Thumbs.db

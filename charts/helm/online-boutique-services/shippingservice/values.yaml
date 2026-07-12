@@ -1,0 +1,72 @@
+deploymentName: shippingservice-deployment
+serviceName: shippingservice
+
+appLabel: shippingservice
+appName: shippingservice
+jobLabel: shippingservice
+
+replicaCount: 1
+
+image:
+  repository: us-central1-docker.pkg.dev/project-1cdbea51-6334-4e02-967/app-images/shippingservice
+  tag: "v0.1.20"
+  pullPolicy: IfNotPresent
+
+annotations:
+  instrumentation.opentelemetry.io/inject-go: app-instrumentation
+  instrumentation.opentelemetry.io/otel-go-auto-target-exe: "/src/shippingservice"
+  resource.opentelemetry.io/service.name: "shippingservice"
+
+shareProcessNamespace: true
+containers:
+  - name: server
+    ports:
+      - containerPort: 50051
+    securityContext:
+          privileged: true
+    env:
+      - name: PORT
+        value: "50051"
+      - name: DISABLE_PROFILER
+        value: "1"
+     
+
+    readinessProbe:
+      periodSeconds: 5
+      grpc:
+        port: 50051
+    livenessProbe:
+      grpc:
+        port: 50051
+    # resources:
+    #   requests:
+    #     cpu: 100m
+    #     memory: 64Mi
+    #   limits:
+    #     cpu: 200m
+    #     memory: 128Mi
+
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+
+service:
+  enabled: true
+  type: ClusterIP
+  name: grpc
+  port: 50051
+  targetPort: 50051
+
+serviceAccount:
+  create: true
+  name: "shippingservice"
+
+profiler_enabled: "false"
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1

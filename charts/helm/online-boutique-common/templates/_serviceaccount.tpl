@@ -1,0 +1,11 @@
+{{- define "common.serviceaccount" -}}
+{{- if .Values.serviceAccount.create }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Values.serviceAccount.name }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    iam.gke.io/gcp-service-account: {{ .Values.global.gcp.serviceAccountEmail | default "" }}
+{{- end }}
+{{- end }}

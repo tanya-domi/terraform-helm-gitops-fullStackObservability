@@ -1,0 +1,66 @@
+deploymentName: paymentservice-deployment
+serviceName: paymentservice
+
+appLabel: paymentservice
+appName: paymentservice
+jobLabel: paymentservice
+
+replicaCount: 1
+
+image:
+  repository: us-central1-docker.pkg.dev/project-1cdbea51-6334-4e02-967/app-images/paymentservice
+  tag: "v0.1.20"
+  pullPolicy: IfNotPresent
+  # imagePullSecrets:
+  #   - name: my-registry-key
+
+annotations:
+  instrumentation.opentelemetry.io/inject-nodejs: "app-instrumentation"
+
+containers:
+  - name: server
+    ports:
+      - containerPort: 50051
+    env:
+      - name: PORT
+        value: "50051"
+      - name: DISABLE_PROFILER
+        value: "1"
+      - name: OTEL_SERVICE_NAME
+        value: paymentservice
+
+
+    readinessProbe:
+      grpc:
+        port: 50051
+    livenessProbe:
+      grpc:
+        port: 50051
+    # resources:
+    #   requests:
+    #     cpu: 100m
+    #     memory: 64Mi
+    #   limits:
+    #     cpu: 200m
+    #     memory: 128Mi
+
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+
+service:
+  enabled: true
+  type: ClusterIP
+  name: grpc
+  port: 50051
+  targetPort: 50051
+
+serviceAccount:
+  create: true
+  name: "paymentservice"
+
+profiler_enabled: "false"

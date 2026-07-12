@@ -1,0 +1,77 @@
+# Even with Workload Identity, ArgoCD still needs a repository secret to know about the OCI registry. Use an access token refresher or register with a placeholder:
+
+# Token refresher CronJob for Workload Identity
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: gar-token-refresher
+  namespace: argocd
+spec:
+  schedule: "0 * * * *"  # Every hour (tokens expire after 1 hour)
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          # K8s service account that has Workload Identity access to GCP
+          serviceAccountName: argocd-repo-server
+          containers:
+            - name: refresher
+              image: google/cloud-sdk:slim
+              command:
+                - /bin/bash
+                - -c
+                - |
+                  set -euo pipefail
+                  echo "Installing kubectl..."
+                  apt-get update -qq && apt-get install -y -qq kubectl
+
+                  echo "Fetching fresh access token..."
+                  TOKEN=$(gcloud auth print-access-token)
+                  REGISTRY="us-central1-docker.pkg.dev/project-1cdbea51-6334-4e02-967/helm-charts"
+
+                  cat <<EOSECRET | kubectl apply -f -
+                  apiVersion: v1
+                  kind: Secret
+                  metadata:
+                    name: artifact-registry-repo
+                    namespace: argocd
+                    labels:
+                      argocd.argoproj.io/secret-type: repository
+                  type: Opaque
+                  stringData:
+                    type: helm
+                    name: gcp-helm-charts
+                    url: "${REGISTRY}"
+                    enableOCI: "true"
+                    username: oauth2accesstoken
+                    password: "${TOKEN}"
+                  EOSECRET
+                  echo "Successfully refreshed GAR token secret."
+          restartPolicy: OnFailure
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: gar-token-refresher-role
+  namespace: argocd
+rules:
+  - apiGroups: [""]
+    resources: ["secrets"]
+    # Needs get/create/update/patch to manage gar-oci-token secret
+    verbs: ["get", "create", "update", "patch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: gar-token-refresher-binding
+  namespace: argocd
+subjects:
+  - kind: ServiceAccount
+    name: argocd-repo-server
+    namespace: argocd
+roleRef:
+  kind: Role
+  name: gar-token-refresher-role
+  apiGroup: rbac.authorization.k8s.io
