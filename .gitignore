@@ -27,3 +27,6 @@ override.tf.json
 *.tfplan
 *.tfvars
 *.tfvars.json
+infra/terraform/envs/bootstrap/terraform.tfvars
+.terraform.lock.hcl
+infra/terraform/envs/foundation/destroy_foundation.tfplan
