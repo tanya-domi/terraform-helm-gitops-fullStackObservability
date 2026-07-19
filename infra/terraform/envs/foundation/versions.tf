@@ -3,8 +3,8 @@ terraform {
 
   # Remote GCS Backend  for C Infrastructure Layer
   backend "gcs" {
-    bucket = "tanya-terraform-state" 
-    prefix = "foundation"            # Isolates state file
+    bucket = "tanya-terraform-state"
+    prefix = "foundation" # Isolates state file
   }
 
   required_providers {

@@ -74,7 +74,7 @@
 # resource "google_iam_workload_identity_pool_provider" "github_provider" {
 #   workload_identity_pool_id          = google_iam_workload_identity_pool.github_pool.workload_identity_pool_id
 #   workload_identity_pool_provider_id = "github-provider"
-  
+
 #   attribute_mapping = {
 #     "google.subject"       = "assertion.sub"
 #     "attribute.repository" = "assertion.repository"
@@ -249,7 +249,7 @@ resource "google_iam_workload_identity_pool" "github_pool" {
 resource "google_iam_workload_identity_pool_provider" "github_provider" {
   workload_identity_pool_id          = google_iam_workload_identity_pool.github_pool.workload_identity_pool_id
   workload_identity_pool_provider_id = "github-provider"
-  
+
   attribute_mapping = {
     "google.subject"       = "assertion.sub"
     "attribute.repository" = "assertion.repository"
@@ -307,9 +307,9 @@ locals {
       "GCP_TERRAFORM_SA_EMAIL" = google_service_account.infra_deployer.email
     }
     "Full-Stack-Observability-for-Microservices" = {
-      "GCP_WIF_PROVIDER"      = google_iam_workload_identity_pool_provider.github_provider.name
-      "GCP_BUILD_SA_EMAIL"    = google_service_account.app_pusher.email
-      "GCP_PROMOTE_SA_EMAIL"  = google_service_account.app_promoter.email # Added: Promotion SA injection
+      "GCP_WIF_PROVIDER"     = google_iam_workload_identity_pool_provider.github_provider.name
+      "GCP_BUILD_SA_EMAIL"   = google_service_account.app_pusher.email
+      "GCP_PROMOTE_SA_EMAIL" = google_service_account.app_promoter.email # Added: Promotion SA injection
     }
   }
 

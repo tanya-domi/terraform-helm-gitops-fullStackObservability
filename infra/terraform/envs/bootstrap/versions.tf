@@ -1,7 +1,7 @@
 terraform {
   required_version = ">= 1.6.0"
 
-# Remote Backend  for Bootstrap
+  # Remote Backend  for Bootstrap
   # backend "gcs" {
   #   bucket = "tanya-terraform-state"
   #   prefix = "bootstrap"

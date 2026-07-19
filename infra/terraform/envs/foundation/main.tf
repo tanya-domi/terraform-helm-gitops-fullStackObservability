@@ -299,7 +299,7 @@
 #   version          = "0.12.3"
 
 #   values = [file("${path.module}/values/image-updater.yaml")]
-  
+
 #   depends_on = [helm_release.argocd] 
 # }
 
@@ -430,7 +430,7 @@ resource "google_project_iam_member" "node_telemetry_roles" {
     "roles/monitoring.metricWriter",
     "roles/monitoring.viewer"
   ])
-  
+
   project = "project-1cdbea51-6334-4e02-967"
   role    = each.key
   member  = "serviceAccount:${google_service_account.gke_nodes.email}"
@@ -561,7 +561,7 @@ resource "google_storage_bucket" "tempo_store" {
 
   lifecycle_rule {
     condition { age = 7 }
-    action    { type = "Delete" }
+    action { type = "Delete" }
   }
 }
 

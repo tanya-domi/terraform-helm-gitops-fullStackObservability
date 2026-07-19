@@ -101,8 +101,8 @@ variable "master_authorized_networks" {
   description = "External networks permitted access to the GKE control plane API endpoint."
 }
 
-variable "bucket" { 
-  type        = string 
+variable "bucket" {
+  type        = string
   description = "GCS bucket for state management."
 }
 
