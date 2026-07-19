@@ -1,16 +1,16 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: argocd-dependencies
+  name: boutique-root
   namespace: argocd
 spec:
-  project: default
+  project: boutique-platform
   source:
-    repoURL: 'https://github.com/tanya-domi/Full-Stack-Observability-for-Microservices.git'
-    targetRevision: HEAD
-    path: gitops/bootstrap/argocd-components
+    repoURL: https://github.com/tanya-domi/terraform-helm-gitops-fullStackObservability
+    targetRevision: main
+    path: gitops/bootstrap/applications
   destination:
-    server: 'https://kubernetes.default.svc'
+    server: https://kubernetes.default.svc
     namespace: argocd
   syncPolicy:
     automated:

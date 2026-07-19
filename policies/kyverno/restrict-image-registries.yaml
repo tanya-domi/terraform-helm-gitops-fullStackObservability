@@ -1,0 +1,25 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: restrict-image-registries
+spec:
+  validationFailureAction: Enforce
+  background: true
+  rules:
+    - name: validate-registries
+      match:
+        any:
+          - resources:
+              kinds:
+                - Pod
+              namespaces:
+                - dev
+                - stage
+                - prod
+      validate:
+        message: "Images must come from project Artifact Registry."
+        pattern:
+          spec:
+            containers:
+              - image: "us-central1-docker.pkg.dev/project-1cdbea51-6334-4e02-967/dev-app-images"
+             # "YOUR_REGION-docker.pkg.dev/YOUR_PROJECT_ID/*"

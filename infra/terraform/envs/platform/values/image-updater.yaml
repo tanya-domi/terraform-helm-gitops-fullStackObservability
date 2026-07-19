@@ -1,0 +1,35 @@
+config:
+  registries:
+    - name: GCP Artifact Registry
+      prefix: us-central1-docker.pkg.dev
+      api_url: https://us-central1-docker.pkg.dev
+      default: true
+      ping: yes
+      credentials: ext:/bin/sh /auth/gcp-auth.sh
+      credsexpire: 59m
+
+volumes:
+  - name: auth-vol
+    configMap:
+      name: auth-cm
+      defaultMode: 0755
+
+volumeMounts:
+  - name: auth-vol
+    mountPath: /auth
+
+serviceAccount:
+  create: true
+  name: argocd-image-updater
+  annotations:
+    iam.gke.io/gcp-service-account: argocd-image-updater-sa@project-1cdbea51-6334-4e02-967.iam.gserviceaccount.com
+
+nodeSelector:
+  role: "monitoring"
+
+tolerations:
+  - key: "dedicated"
+    operator: "Equal"
+    value: "monitoring"
+    effect: "NoSchedule"
+

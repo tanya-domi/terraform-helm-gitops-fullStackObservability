@@ -3,6 +3,10 @@
 {{- default .Release.Namespace .Values.namespaceOverride -}}
 {{- end -}}
 
+{{- define "common.gateway.host" -}}
+{{ .Values.global.gateway.host | default "default.example.com" }}
+{{- end -}}
+
 {{/* 2. Dynamic Name (Uses Chart.Name unless overridden) */}}
 {{- define "common.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}

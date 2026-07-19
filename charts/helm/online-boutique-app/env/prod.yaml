@@ -1,15 +1,50 @@
 global:
-  configMapName: online-boutique-dev-configmap
+  gateway:
+    enabled: true
+    name: boutique-gateway
+    className: gke-l7-gylb
+    host: tanyadominicsheytech.eu
+    certificates:
+      - boutique-prod-ssl-cert
+
+  route:
+    enabled: true
+    name: frontend-route
+    gatewayName: boutique-gateway
+    host: prod.tanyadominicsheytech.eu
+    serviceName: frontend
+    servicePort: 80
+
+  configMapName: online-boutique-prod-configmap
   
   redis:
-    address: "10.113.0.4:6379" # prod Memorystore IP
+    address: "redis-service.boutique.svc.cluster.local:6379" #"10.34.0.4:6379" Dev Memorystore IP
+
+  replicaCount: 2
+
+  gcp:
+    serviceAccountEmail: "github-actions-pusher@project-1cdbea51-6334-4e02-967.iam.gserviceaccount.com"
 
   features:
     enableTracing: "true"
     enable_profiler: "false"
+      
+  # Add overrides values
+releaseInfo:
+  enabled: true
 
-  ingress:
-    host: prod.tanyadominicsheytech.eu  
-    annotations:
-      kubernetes.io/ingress.global-static-ip-name: "online-boutique-dev-ip"
-      networking.gke.io/managed-certificates: "boutique-dev-ssl-cert"
+frontend:
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+
+checkoutservice:
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+
+shippingservice:
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 1
+

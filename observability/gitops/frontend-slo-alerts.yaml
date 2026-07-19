@@ -1,0 +1,61 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: frontend-slo-alerts
+  namespace: monitoring
+  labels:
+    role: alert-rules
+    prometheus: k8s
+spec:
+  groups:
+    - name: frontend-availability-slo
+      rules:
+        # ------------------------------------------------------------------
+        # Recording Rules: Pre-compute error rates across distinct windows
+        # ------------------------------------------------------------------
+        - record: http_requests:slo_errors:ratio_rate1h
+          expr: sum(rate(http_requests_total{job="frontend", status=~"5.."}[1h])) / sum(rate(http_requests_total{job="frontend"}[1h]))
+
+        - record: http_requests:slo_errors:ratio_rate6h
+          expr: sum(rate(http_requests_total{job="frontend", status=~"5.."}[6h])) / sum(rate(http_requests_total{job="frontend"}[6h]))
+
+        # ------------------------------------------------------------------
+        # SRE Alerting Windows: Fast Burn Alert (14.4x over 1 hour)
+        # ------------------------------------------------------------------
+        - alert: FrontendSLOFastBurn
+          expr: http_requests:slo_errors:ratio_rate1h > (1 - 0.99) * 14.4
+          for: 2m
+          labels:
+            severity: page
+            tier: frontend
+          annotations:
+            summary: "Frontend availability error budget burning rapidly"
+            description: "The 1h error rate has exceeded 14.4x the allowable budget. Current value: {{ $value }}"
+            runbook_url: "https://internal.runbooks.net/ops/frontend-slo-burn"
+
+        # ------------------------------------------------------------------
+        # SRE Alerting Windows: Slow Burn Alert (6x over 6 hours)
+        # ------------------------------------------------------------------
+        - alert: FrontendSLOSlowBurn
+          expr: http_requests:slo_errors:ratio_rate6h > (1 - 0.99) * 6
+          for: 15m
+          labels:
+            severity: ticket
+            tier: frontend
+          annotations:
+            summary: "Frontend availability error budget exhausting steadily"
+            description: "The 6h error rate has sustained an exhaustion trend above 6x budget limits."
+            runbook_url: "https://internal.runbooks.net/ops/frontend-slo-burn"
+
+        # ------------------------------------------------------------------
+        # Infrastructure Alerting: Pod Restart Loop Storm
+        # ------------------------------------------------------------------
+        - alert: KubePodCrashLooping
+          expr: sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total{namespace="prod"}[5m])) > 3
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Pod container restart storm detected"
+            description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} has restarted more than 3 times in a rolling 5-minute interval."
+            runbook_url: "https://internal.runbooks.net/ops/k8s-crashloopbackoff"

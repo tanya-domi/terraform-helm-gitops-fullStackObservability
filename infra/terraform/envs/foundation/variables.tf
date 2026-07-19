@@ -24,14 +24,15 @@ variable "zone" {
 # ==========================================
 # Automated Workload Identities (CI/CD)
 # ==========================================
+
 variable "build_ci_sa_name" {
   type        = string
-  description = "The account ID (short name) for the build CI service account."
+  description = "The account ID prefix string for the build CI service account."
 }
 
 variable "promote_ci_sa_name" {
   type        = string
-  description = "The account ID (short name) for the deployment/promotion CI service account."
+  description = "The account ID prefix string for the promotional deployment CI service account."
 }
 
 # ==========================================
@@ -47,12 +48,22 @@ variable "dns_domain" {
   description = "The fully qualified domain name ending with a trailing dot (e.g., boutique.example.com.)."
 }
 
+variable "cert_map_name" {
+  type        = string
+  description = "Target Certificate Manager Map name resource."
+}
+
 # ==========================================
 # Network Infrastructure Allocations
 # ==========================================
 variable "vpc_name" {
   type        = string
   description = "Name of the target VPC network."
+}
+
+variable "sa-gke-nodes" {
+  type        = string
+  description = "The account ID prefix string for GKE worker nodes."
 }
 
 variable "subnet_cidr" {
@@ -75,9 +86,32 @@ variable "public_subnet1_cidr" {
   description = "CIDR block for public facing resources and ingress proxies."
 }
 
-variable "gke_cluster_name" {
+variable "cluster_name" {
   type        = string
   description = "The name of the GKE cluster managed by this loop"
   default     = "telemetry-gke-cluster"
 }
 
+variable "master_authorized_networks" {
+  type = list(object({
+    cidr_block   = string
+    display_name = string
+  }))
+  default     = []
+  description = "External networks permitted access to the GKE control plane API endpoint."
+}
+
+variable "bucket" { 
+  type        = string 
+  description = "GCS bucket for state management."
+}
+
+variable "github_repos" {
+  type    = list(string)
+  default = ["tanya-domi/terraform-helm-gitops-fullStackObservability"]
+}
+
+variable "docker_registries" {
+  type    = list(string)
+  default = ["app-images", "helm-charts"]
+}

@@ -1,9 +1,9 @@
-output "vpc_network_id" {
-  value = module.network.network_id
+output "vpc_network_name" {
+  value = module.network.network_name
 }
 
-output "gke_private_subnet_id" {
-  value = module.network.private_subnet_id
+output "gke_subnetwork_name" {
+  value = module.network.subnetwork_name
 }
 
 output "redis_connection_host" {
@@ -18,9 +18,9 @@ output "cluster_endpoint" {
   value = module.gke.cluster_endpoint
 }
 
-output "boutique_dev_ip_address" {
+output "boutique_gateway_ip_address" {
   description = "Static External IP reserved for Ingress traffic routing"
-  value       = google_compute_global_address.boutique_ip.address
+  value       = google_compute_global_address.gateway.address
 }
 
 output "tempo_bucket_name" {
@@ -36,4 +36,22 @@ output "thanos_bucket_name" {
 output "observability_storage_sa_email" {
   description = "Service Account email used by Telemetry storage layers"
   value       = google_service_account.observability_storage_sa.email
+}
+
+output "artifact_repository_urls" {
+  value       = module.custom_artifact_registry.repository_urls
+  description = "OCI container registry targets for building images and pushing Helm charts."
+}
+
+# Automated Workload Identities (CI/CD Pipelines)
+# ==============================================================================
+
+output "build_ci_sa_email" {
+  description = "Fully qualified email address of the build CI service account executor."
+  value       = var.build_ci_sa_name
+}
+
+output "promote_ci_sa_email" {
+  description = "Fully qualified email address of the promotional deployment CI service account executor."
+  value       = var.promote_ci_sa_name
 }

@@ -1,0 +1,75 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-golden-signals
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  golden-signals.json: |-
+    {
+      "id": null,
+      "title": "Online Boutique — SRE Production Platform",
+      "tags": ["sre", "prod", "thanos", "elasticsearch"],
+      "schemaVersion": 36,
+      "version": 1,
+      "refresh": "30s",
+      "timezone": "utc",
+      "panels": [
+        {
+          "id": 1,
+          "type": "timeseries",
+          "title": "Frontend HTTP Ingress Success Rate",
+          "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "thanos-query" },
+              "expr": "sum(rate(http_requests_total{job=\"frontend\", status!~\"5..\"}[2m])) / sum(rate(http_requests_total{job=\"frontend\"}[2m])) * 100",
+              "legendFormat": "Success Rate (%)"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "percent",
+              "custom": { "drawStyle": "line", "lineInterpolation": "smooth" }
+            }
+          }
+        },
+        {
+          "id": 2,
+          "type": "timeseries",
+          "title": "Container CrashLoop Restarts (Prod Namespace)",
+          "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+          "targets": [
+            {
+              "datasource": { "type": "prometheus", "uid": "thanos-query" },
+              "expr": "sum by (pod) (rate(kube_pod_container_status_restarts_total{namespace=\"prod\"}[5m]))",
+              "legendFormat": "{{pod}}"
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {
+              "unit": "cps",
+              "custom": { "drawStyle": "bars" }
+            }
+          }
+        },
+        {
+          "id": 3,
+          "type": "logs",
+          "title": "Elasticsearch Live Production Error Stream (EFK)",
+          "gridPos": { "x": 0, "y": 8, "w": 24, "h": 10 },
+          "targets": [
+            {
+              "datasource": { "type": "elasticsearch", "uid": "elasticsearch-prod" },
+              "query": "kubernetes.namespace_name: \"prod\" AND (log.level: \"error\" OR log.level: \"critical\")"
+            }
+          ],
+          "options": {
+            "showLabels": false,
+            "wrapLogMessage": true,
+            "enableLogDetails": true
+          }
+        }
+      ]
+    }

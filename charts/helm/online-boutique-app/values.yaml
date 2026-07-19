@@ -9,16 +9,23 @@ global:
     shippingservice: "shippingservice:50051"
     checkoutservice: "checkoutservice:5050"
     adservice: "adservice:9555"
-  
-  ingress:
-    enabled: true
-    className: gce
-    name: boutique
+
+
+  gateway:
+    enabled: false
+    name: boutique-gateway
+    className: gke-l7-gylb
+    host: ""
+    certificates:
+      - boutique-dev-ssl-cert
+
+  route:
+    enabled: false
+    name: frontend-route
+    gatewayName: boutique-gateway
+    host: ""
     serviceName: frontend
     servicePort: 80
-    annotations:
-      kubernetes.io/ingress.class: "gce"
-      networking.gke.io/v1beta1.FrontendConfig: "boutique-frontend-config"
       
 
 releaseInfo:

@@ -1,4 +1,20 @@
 global:
+  gateway:
+    enabled: true
+    name: boutique-gateway
+    className: gke-l7-gylb
+    host: dev.tanyadominicsheytech.eu
+    certificates:
+      - boutique-dev-ssl-cert
+
+  route:
+    enabled: true
+    name: frontend-route
+    gatewayName: boutique-gateway
+    host: dev.tanyadominicsheytech.eu
+    serviceName: frontend
+    servicePort: 80
+
   configMapName: online-boutique-dev-configmap
   
   redis:
@@ -12,18 +28,6 @@ global:
   features:
     enableTracing: "true"
     enable_profiler: "false"
-
-  ingress:
-    enabled: true 
-    className: gce
-    name: boutique
-    serviceName: frontend
-    servicePort: 80
-    host: dev.tanyadominicsheytech.eu
-    annotations:
-      kubernetes.io/ingress.class: "gce"
-      kubernetes.io/ingress.global-static-ip-name: "online-boutique-dev-ip"
-      networking.gke.io/managed-certificates: "boutique-dev-ssl-cert" 
       
   # Add overrides values
 releaseInfo:

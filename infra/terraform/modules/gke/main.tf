@@ -1,81 +1,195 @@
+# resource "google_container_cluster" "primary" {
+#   name                = "${var.env}-${var.cluster_name}"
+#   location            = var.zone
+#   deletion_protection = false
+
+#   network    = var.network_id
+#   subnetwork = var.subnet_id
+
+#   remove_default_node_pool = true
+#   initial_node_count       = 1
+#   networking_mode          = "VPC_NATIVE"
+
+#   ip_allocation_policy {
+#     cluster_secondary_range_name  = "gke-pods"
+#     services_secondary_range_name = "gke-services"
+#   }
+
+#   private_cluster_config {
+#     enable_private_nodes    = true
+#     enable_private_endpoint = false
+#     master_ipv4_cidr_block  = var.master_ipv4_cidr_block
+#   }
+
+#   workload_identity_config {
+#     workload_pool = "${var.project_id}.svc.id.goog"
+#   }
+
+#   secret_manager_config {
+#     enabled = true
+#   }
+# }
+
+# # Application Compute Pool
+# resource "google_container_node_pool" "app_nodes" {
+#   name       = "application-pool"
+#   cluster    = google_container_cluster.primary.id
+#   node_count = var.app_node_count
+
+#   node_config {
+#     machine_type    = var.app_machine_type
+#     disk_size_gb    = 50
+#     disk_type       = "pd-balanced"
+#     service_account = var.node_service_account_email
+#     oauth_scopes    = ["https://www.googleapis.com/auth/cloud-platform"]
+
+#     workload_metadata_config {
+#       mode = "GKE_METADATA"
+#     }
+
+#     labels = {
+#       role = "application"
+#       env  = var.env
+#     }
+#   }
+# }
+
+# # Operations & Observability Compute Pool (ArgoCD, Prometheus, Grafana)
+# resource "google_container_node_pool" "monitor_nodes" {
+#   name       = "monitoring-pool"
+#   cluster    = google_container_cluster.primary.id
+#   node_count = var.monitor_node_count
+
+#   node_config {
+#     machine_type    = var.monitor_machine_type
+#     disk_size_gb    = 50
+#     disk_type       = "pd-balanced"
+#     service_account = var.node_service_account_email
+#     oauth_scopes    = ["https://www.googleapis.com/auth/cloud-platform"]
+
+#     workload_metadata_config {
+#       mode = "GKE_METADATA"
+#     }
+
+#     labels = {
+#       role = "monitoring"
+#       env  = var.env
+#     }
+
+#     taint {
+#       key    = "dedicated"
+#       value  = "monitoring"
+#       effect = "NO_SCHEDULE"
+#     }
+#   }
+# }
+
+# ==============================================================================
+# Cost-Optimized Zonal GKE Control Plane (Single Availability Zone)
+# ==============================================================================
 resource "google_container_cluster" "primary" {
-  name                = "${var.env}-${var.cluster_name}"
-  location            = var.zone
+  project             = var.project_id
+  name                = var.cluster_name
+  location            = "${var.region}-a" # Appends active zone (e.g., us-central1-a) to bypass regional charges
   deletion_protection = false
-
-  network    = var.network_id
-  subnetwork = var.subnet_id
-
-  remove_default_node_pool = true
-  initial_node_count       = 1
-  networking_mode          = "VPC_NATIVE"
-
-  ip_allocation_policy {
-    cluster_secondary_range_name  = "gke-pods"
-    services_secondary_range_name = "gke-services"
-  }
-
-  private_cluster_config {
-    enable_private_nodes    = true
-    enable_private_endpoint = false
-    master_ipv4_cidr_block  = var.master_ipv4_cidr_block
-  }
 
   workload_identity_config {
     workload_pool = "${var.project_id}.svc.id.goog"
   }
 
+  network    = var.network
+  subnetwork = var.subnetwork
+
+  remove_default_node_pool = true
+  initial_node_count       = 1
+  
+  networking_mode = "VPC_NATIVE"
+  ip_allocation_policy {
+    cluster_secondary_range_name  = var.pods_range_name
+    services_secondary_range_name = var.services_range_name
+  }
+
+  private_cluster_config {
+    enable_private_nodes    = true
+    enable_private_endpoint = false 
+    master_ipv4_cidr_block  = "172.16.0.0/28"
+  }
+
+  master_authorized_networks_config {
+    dynamic "cidr_blocks" {
+      for_each = var.master_authorized_networks
+      content {
+        cidr_block   = cidr_blocks.value.cidr_block
+        display_name = cidr_blocks.value.display_name
+      }
+    }
+  }
+
+  database_encryption {
+    state    = "ENCRYPTED"
+    key_name = var.kms_key_id
+  }
+
   secret_manager_config {
     enabled = true
   }
+
+  # Free Tier Control: Silence verbose control plane logging fees
+  logging_config {
+    enable_components = []
+  }
+  monitoring_config {
+    enable_components = []
+  }
 }
 
-# Application Compute Pool
+# ==============================================================================
+# Dedicated Isolated Node Pools (Strictly Locked to Single Zone)
+# ==============================================================================
 resource "google_container_node_pool" "app_nodes" {
+  project    = var.project_id
   name       = "application-pool"
   cluster    = google_container_cluster.primary.id
-  node_count = var.app_node_count
-
+  location   = google_container_cluster.primary.location
+  node_count = 2 # 2 total VMs in your chosen zone
+  
   node_config {
-    machine_type    = var.app_machine_type
-    disk_size_gb    = 50
-    disk_type       = "pd-balanced"
-    service_account = var.node_service_account_email
-    oauth_scopes    = ["https://www.googleapis.com/auth/cloud-platform"]
-
-    workload_metadata_config {
-      mode = "GKE_METADATA"
+    machine_type = "e2-standard-2"
+    disk_size_gb = 50
+    disk_type    = "pd-balanced"
+    oauth_scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+    
+    workload_metadata_config { 
+      mode = "GKE_METADATA" 
     }
-
-    labels = {
-      role = "application"
-      env  = var.env
+    
+    labels = { 
+      role = "application" 
     }
   }
 }
 
-# Operations & Observability Compute Pool (ArgoCD, Prometheus, Grafana)
 resource "google_container_node_pool" "monitor_nodes" {
+  project    = var.project_id
   name       = "monitoring-pool"
   cluster    = google_container_cluster.primary.id
-  node_count = var.monitor_node_count
+  location   = google_container_cluster.primary.location
+  node_count = 2 # 2 total VMs dedicated to Thanos, Tempo, Prom, Grafana
 
   node_config {
-    machine_type    = var.monitor_machine_type
-    disk_size_gb    = 50
-    disk_type       = "pd-balanced"
-    service_account = var.node_service_account_email
-    oauth_scopes    = ["https://www.googleapis.com/auth/cloud-platform"]
-
-    workload_metadata_config {
-      mode = "GKE_METADATA"
+    machine_type = "e2-standard-4" # Heavier compute slice for local observability engines
+    disk_size_gb = 50
+    disk_type    = "pd-balanced"
+    oauth_scopes = ["https://www.googleapis.com/auth/cloud-platform"]
+    
+    workload_metadata_config { 
+      mode = "GKE_METADATA" 
     }
-
-    labels = {
-      role = "monitoring"
-      env  = var.env
+    
+    labels = { 
+      role = "monitoring" 
     }
-
+    
     taint {
       key    = "dedicated"
       value  = "monitoring"

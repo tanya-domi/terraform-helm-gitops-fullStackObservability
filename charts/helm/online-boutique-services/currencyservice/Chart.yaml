@@ -26,4 +26,4 @@ appVersion: "1.0.0"
 dependencies:
   - name: online-boutique-common
     version: "0.1.17"
-    repository: "oci://us-central1-docker.pkg.dev/project-1cdbea51-6334-4e02-967/helm-charts"
+    repository: "file://../online-boutique-common" #"oci://us-central1-docker.pkg.dev/project-1cdbea51-6334-4e02-967/helm-charts"

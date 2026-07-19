@@ -40,6 +40,7 @@ variable "frontend_slo_goal" {
 
 variable "runbook_base_url" {
   type        = string
-  default     = "https://github.com/tanya-domi/Full-Stack-Observability-for-Microservices/blob/main/docs/sre/runbooks"
+  default     = "https://github.com/tanya-domi/terraform-helm-gitops-fullStackObservability/blob/main/docs/sre/runbooks"
   description = "The root URL matching your repository directory path for debugging runbooks."
 }
+
