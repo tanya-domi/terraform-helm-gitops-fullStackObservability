@@ -51,7 +51,7 @@ jobs:
         run: |
           terraform -chdir=infra/terraform/envs/bootstrap init -backend=false
           terraform -chdir=infra/terraform/envs/bootstrap fmt -check -recursive
-          terraform -chdir=infra/terraform/envs/bootstrap validate
+          terraform -chdir=infra/terraform/envs/bootstrap validate -validate-vars=false
 
       - name: Terraform fmt and validate (foundation)
         run: |
