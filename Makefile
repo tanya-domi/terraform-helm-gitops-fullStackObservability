@@ -5,7 +5,7 @@ TF_BOOTSTRAP  := infra/terraform/envs/bootstrap
 TF_FOUNDATION := infra/terraform/envs/foundation
 TF_OBSERVABILITY := infra/terraform/envs/observability
 CHARTS        := charts/frontend charts/cartservice charts/currencyservice charts/productcatalogservice charts/redis-cart
-GCP_REGION    ?= europe-west1
+GCP_REGION    ?= us-central1
 
 .PHONY: help fmt validate helm-lint tf-bootstrap-init tf-bootstrap-plan tf-foundation-init tf-foundation-plan tf-observability-init tf-observability-plan kubeconfig smoke slo-probe
 
