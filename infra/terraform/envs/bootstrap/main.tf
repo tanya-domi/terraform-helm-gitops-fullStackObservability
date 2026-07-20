@@ -230,9 +230,6 @@
 
 
 
-# ==============================================================================
-# 1. STATE MANAGEMENT FOUNDATION
-# ==============================================================================
 
 locals {
   name_prefix = "boutique"
@@ -336,6 +333,13 @@ resource "google_project_iam_member" "project_artifact_admin" {
   member  = "serviceAccount:${google_service_account.app_promoter.email}"
 }
 
+# Authorize the OIDC principal group pool directly on the bucket 
+resource "google_storage_bucket_iam_member" "infra_state_wif_admin" {
+  bucket = google_storage_bucket.terraform_state.name
+  role   = "roles/storage.objectAdmin"
+  member = local.infra_wif_member # Optimized to use your clean local variable
+}
+
 # ==============================================================================
 # 4. WORKLOAD IDENTITY FEDERATION ENGINE (OIDC POOL)
 # ==============================================================================
@@ -400,21 +404,20 @@ resource "google_service_account_iam_member" "app_promote_oidc_auth" {
 # ==============================================================================
 
 locals {
-  # Aligned keys directly with GitHub Workflow block expectations
   secrets_configuration = {
     "terraform-helm-gitops-fullStackObservability" = {
-      "GCP_WIF_PROVIDER" = google_iam_workload_identity_pool_provider.github_provider.name
-      "GCP_BUILD_SA"     = google_service_account.app_pusher.email
-      "GCP_PROMOTE_SA"   = google_service_account.app_promoter.email
+      "GCP_WIF_PROVIDER"  = google_iam_workload_identity_pool_provider.github_provider.name
+      "GCP_BUILD_SA"      = google_service_account.app_pusher.email
+      "GCP_PROMOTE_SA"    = google_service_account.app_promoter.email
+      "GCP_TERRAFORM_SA"  = google_service_account.infra_deployer.email # CRITICAL FIX: Maps SA to foundation runner
     }
     "Full-Stack-Observability-for-Microservices" = {
-      "GCP_WIF_PROVIDER" = google_iam_workload_identity_pool_provider.github_provider.name
-      "GCP_BUILD_SA"     = google_service_account.app_pusher.email
-      "GCP_PROMOTE_SA"   = google_service_account.app_promoter.email
+      "GCP_WIF_PROVIDER"  = google_iam_workload_identity_pool_provider.github_provider.name
+      "GCP_BUILD_SA"      = google_service_account.app_pusher.email
+      "GCP_PROMOTE_SA"    = google_service_account.app_promoter.email
     }
   }
 
-  # Flatten map configurations into an explicit schema structure for for_each loops
   flattened_secrets = merge([
     for repo_name, secret_map in local.secrets_configuration : {
       for secret_key, secret_val in secret_map : "${repo_name}.${secret_key}" => {
