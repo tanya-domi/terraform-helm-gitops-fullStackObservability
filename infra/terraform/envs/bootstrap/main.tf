@@ -406,15 +406,15 @@ resource "google_service_account_iam_member" "app_promote_oidc_auth" {
 locals {
   secrets_configuration = {
     "terraform-helm-gitops-fullStackObservability" = {
-      "GCP_WIF_PROVIDER"  = google_iam_workload_identity_pool_provider.github_provider.name
-      "GCP_BUILD_SA"      = google_service_account.app_pusher.email
-      "GCP_PROMOTE_SA"    = google_service_account.app_promoter.email
-      "GCP_TERRAFORM_SA"  = google_service_account.infra_deployer.email # CRITICAL FIX: Maps SA to foundation runner
+      "GCP_WIF_PROVIDER" = google_iam_workload_identity_pool_provider.github_provider.name
+      "GCP_BUILD_SA"     = google_service_account.app_pusher.email
+      "GCP_PROMOTE_SA"   = google_service_account.app_promoter.email
+      "GCP_TERRAFORM_SA" = google_service_account.infra_deployer.email # CRITICAL FIX: Maps SA to foundation runner
     }
     "Full-Stack-Observability-for-Microservices" = {
-      "GCP_WIF_PROVIDER"  = google_iam_workload_identity_pool_provider.github_provider.name
-      "GCP_BUILD_SA"      = google_service_account.app_pusher.email
-      "GCP_PROMOTE_SA"    = google_service_account.app_promoter.email
+      "GCP_WIF_PROVIDER" = google_iam_workload_identity_pool_provider.github_provider.name
+      "GCP_BUILD_SA"     = google_service_account.app_pusher.email
+      "GCP_PROMOTE_SA"   = google_service_account.app_promoter.email
     }
   }
 
