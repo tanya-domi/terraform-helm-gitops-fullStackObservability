@@ -247,10 +247,10 @@ locals {
 resource "google_storage_bucket" "terraform_state" {
   name                        = var.bucket
   location                    = var.region
-  force_destroy               = false 
+  force_destroy               = false
   storage_class               = "STANDARD"
   uniform_bucket_level_access = true
-  public_access_prevention    = "enforced" 
+  public_access_prevention    = "enforced"
 
   versioning {
     enabled = true
@@ -258,14 +258,14 @@ resource "google_storage_bucket" "terraform_state" {
 
   lifecycle_rule {
     condition {
-      num_newer_versions = 10 
+      num_newer_versions = 10
     }
     action {
       type = "Delete"
     }
   }
 
-  labels = local.labels 
+  labels = local.labels
 }
 
 # ==============================================================================
@@ -354,8 +354,8 @@ resource "google_iam_workload_identity_pool_provider" "github_provider" {
     "google.subject"       = "assertion.sub"
     "attribute.repository" = "assertion.repository"
     "attribute.owner"      = "assertion.repository_owner"
-    "attribute.ref"        = "assertion.ref"   
-    "attribute.actor"      = "assertion.actor" 
+    "attribute.ref"        = "assertion.ref"
+    "attribute.actor"      = "assertion.actor"
   }
 
   attribute_condition = "assertion.repository_owner == 'tanya-domi'"
@@ -410,7 +410,7 @@ locals {
     "Full-Stack-Observability-for-Microservices" = {
       "GCP_WIF_PROVIDER" = google_iam_workload_identity_pool_provider.github_provider.name
       "GCP_BUILD_SA"     = google_service_account.app_pusher.email
-      "GCP_PROMOTE_SA"   = google_service_account.app_promoter.email 
+      "GCP_PROMOTE_SA"   = google_service_account.app_promoter.email
     }
   }
 
