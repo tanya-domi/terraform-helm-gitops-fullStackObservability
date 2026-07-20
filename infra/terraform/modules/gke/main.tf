@@ -59,7 +59,7 @@ resource "google_container_cluster" "primary" {
 }
 
 # ==============================================================================
-# Dedicated Isolated Node Pools (Strictly Locked to Single Zone)
+# Dedicated Isolated Node Pools 
 # ==============================================================================
 resource "google_container_node_pool" "app_nodes" {
   project    = var.project_id

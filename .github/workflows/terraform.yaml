@@ -83,7 +83,7 @@ jobs:
       - name: Write CI Terraform variables
         working-directory: infra/terraform/envs/${{ github.event.inputs.stack || 'foundation' }}
         env:
-          PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+          PROJECT_ID: ${{ vars.GCP_PROJECT_ID || steps.auth.outputs.project_id }}
           REGION: ${{ vars.GCP_REGION || 'us-central1' }}
           BUILD_CI_SA: ${{ secrets.GCP_BUILD_SA }}
           PROMOTE_CI_SA: ${{ secrets.GCP_PROMOTE_SA }}
