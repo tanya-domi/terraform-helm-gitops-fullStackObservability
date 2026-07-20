@@ -1,75 +1,35 @@
-# # Terraform
-# **/.terraform/*
-# *.tfstate
-# *.tfstate.*
-# *.tfvars
-# *.tfvars.json
-# terraform.tfvars
-# terraform.tfvars.json
-
-# # Crash logs
-# crash.log
-# crash.*.log
-
-# # Terraform plan files
-# *.tfplan
-# *.plan
-
-# # Override files
-# override.tf
-# override.tf.json
-# *_override.tf
-# *_override.tf.json
-
-# **/.terraform/
-# *.tfstate
-# *.tfstate.*
-# *.tfplan
-# #*.tfvars
-# *.tfvars.json
-# infra/terraform/envs/bootstrap/terraform.tfvars
-# .terraform.lock.hcl
-# infra/terraform/envs/foundation/destroy_foundation.
-# local_override.auto.tfvars
-
-
-# ==========================================
-# Terraform Core & Ephemeral Files
-# ==========================================
-**/.terraform/
-.terraform.lock.hcl
+# Terraform
+**/.terraform/*
 *.tfstate
 *.tfstate.*
+# *.tfvars
+*.tfvars.json
+# terraform.tfvars
+terraform.tfvars.json
+*.auto.tfvars
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Terraform plan files
 *.tfplan
 *.plan
 
-# ==========================================
-# Crash Logs & Temporary Toggles
-# ==========================================
-crash.log
-crash.*.log
-infra/terraform/envs/foundation/destroy_foundation.
-
-# ==========================================
-# Terraform Code Overrides (Built-in mechanism)
-# ==========================================
+# Override files
 override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
 
-# ==========================================
-# Variable Files Hygiene
-# ==========================================
-# 1. Block all local development and dynamic CI auto-vars completely
-*.auto.tfvars
-*.auto.tfvars.json
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+#*.tfvars
+*.tfvars.json
+.terraform.lock.hcl
+infra/terraform/envs/foundation/destroy_foundation.
 local_override.auto.tfvars
 
-# 2. Catch-all block for untracked/random tfvars files
-*.tfvars
-*.tfvars.json
 
-# 3. WHITELIST: Explicitly allow only architectural configuration files
-!infra/terraform/envs/bootstrap/terraform.tfvars
-!infra/terraform/envs/foundation/terraform.tfvars

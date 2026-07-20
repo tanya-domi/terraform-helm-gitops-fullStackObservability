@@ -1,0 +1,10 @@
+#Prod GitOps changes require explicit review
+/gitops/envs/prod/                    tanya-domi
+/gitops/applicationsets/              tanya-domi
+/policies/kyverno/                    tanya-domi
+/infra/terraform/envs/foundation/     tanya-domi
+
+
+
+
+

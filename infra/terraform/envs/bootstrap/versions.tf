@@ -2,10 +2,10 @@ terraform {
   required_version = ">= 1.6.0"
 
   # Remote Backend  for Bootstrap
-  # backend "gcs" {
-  #   bucket = "tanya-terraform-state"
-  #   prefix = "bootstrap"
-  # }
+  backend "gcs" {
+    bucket = "tanya-terraform-state"
+    prefix = "bootstrap"
+  }
 
   required_providers {
     google = {
