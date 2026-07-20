@@ -1,15 +1,10 @@
+
 name: Terraform
 
 on:
   pull_request:
-    paths:
-      - "infra/terraform/**"
-      - ".github/workflows/terraform.yml"
   push:
     branches: [main]
-    paths:
-      - "infra/terraform/**"
-      - ".github/workflows/terraform.yml"
   workflow_dispatch:
     inputs:
       stack:
@@ -41,9 +36,9 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@v4
 
-      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+      - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.8
 
@@ -59,49 +54,18 @@ jobs:
           terraform -chdir=infra/terraform/envs/foundation fmt -check -recursive
           terraform -chdir=infra/terraform/envs/foundation validate
 
-      - uses: azure/setup-helm@fe7b79cd5ee1e45176fcad797de68ecaf3ca4814 # v4.2.0
+      - uses: azure/setup-helm@v4
 
       - name: Helm lint
         run: make helm-lint
 
-  # security:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
-  #     - name: Run tfsec
-  #       uses: aquasecurity/tfsec-action@a73ebc46fba54691e25cbe901656e7b205fb9bf2 # v1.0.0
-  #       with:
-  #         working_directory: infra/terraform
-
-  #     - name: Setup Python for Checkov
-  #       uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
-  #       with:
-  #         python-version: '3.11'
-
-  #     - name: Run Checkov
-  #       run: |
-  #         pip install --no-cache-dir checkov==3.2.346
-  #         checkov -d infra/terraform --framework terraform --config-file infra/terraform/.checkov.yaml --quiet
-
-  #     - name: Trivy config scan
-  #       uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-  #       with:
-  #         version: v0.71.0
-  #         scan-type: config
-  #         scan-ref: infra/terraform
-  #         trivyignores: infra/terraform/.trivyignore
-  #         severity: HIGH,CRITICAL
-  #         exit-code: "1"
-
   plan-apply:
-    # CRITICAL SECURITY FIX: Demands security validation completes successfully before execution
     if: github.event_name == 'workflow_dispatch' || (github.ref == 'refs/heads/main' && github.event_name == 'push')
-    needs: [validate] #[validate, security]
+    needs: [validate]
     runs-on: ubuntu-latest
     environment: terraform
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/checkout@v4
 
       - name: Get GitHub Runner Public IP
         id: get_ip
@@ -110,14 +74,14 @@ jobs:
           echo "ip=${RUNNER_IP}" >> $GITHUB_OUTPUT
 
       - name: Authenticate via GCP OIDC Federation
-        uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f # v2.1.7
+        uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_TERRAFORM_SA }}
 
-      - uses: google-github-actions/setup-gcloud@77e7a554d41e2ee56fc945c52dfd3f33d12def9a # v2.1.4
+      - uses: google-github-actions/setup-gcloud@v2
 
-      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+      - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.8
 
@@ -159,7 +123,6 @@ jobs:
             BUILD_SA="${BUILD_CI_SA:-sa-build-ci@${PROJECT_ID}.iam.gserviceaccount.com}"
             PROMOTE_SA="${PROMOTE_CI_SA:-sa-promote-ci@${PROJECT_ID}.iam.gserviceaccount.com}"
             
-            # Merges default configured target systems with the dynamic execution node IP address safely via jq
             echo '${MASTER_AUTH_NETS}' > initial_nets.json
             jq --arg ip "${RUNNER_IP}/32" '. += [{"cidr_block": $ip, "display_name": "github-actions-runner"}]' initial_nets.json > dynamic_nets.json
 
@@ -184,7 +147,6 @@ jobs:
         run: |
           terraform init -input=false
           
-          # Fix: Handles standard pull-request or branch push updates seamlessly
           ACTION="${{ github.event.inputs.action || 'plan' }}"
           if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
             ACTION="apply"
@@ -195,6 +157,204 @@ jobs:
           else
             terraform plan -input=false
           fi
+
+# name: Terraform
+
+# on:
+#   pull_request:
+#     paths:
+#       - "infra/terraform/**"
+#       - ".github/workflows/terraform.yml"
+#   push:
+#     branches: [main]
+#     paths:
+#       - "infra/terraform/**"
+#       - ".github/workflows/terraform.yml"
+#   workflow_dispatch:
+#     inputs:
+#       stack:
+#         description: "bootstrap or foundation"
+#         required: true
+#         default: foundation
+#         type: choice
+#         options:
+#           - bootstrap
+#           - foundation
+#       action:
+#         description: "plan or apply"
+#         required: true
+#         default: plan
+#         type: choice
+#         options:
+#           - plan
+#           - apply
+
+# permissions:
+#   contents: read
+#   id-token: write
+#   pull-requests: write
+
+# env:
+#   TF_IN_AUTOMATION: true
+
+# jobs:
+#   validate:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+#       - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+#         with:
+#           terraform_version: 1.9.8
+
+#       - name: Terraform fmt and validate (bootstrap)
+#         run: |
+#           terraform -chdir=infra/terraform/envs/bootstrap init -backend=false
+#           terraform -chdir=infra/terraform/envs/bootstrap fmt -check -recursive
+#           terraform -chdir=infra/terraform/envs/bootstrap validate 
+
+#       - name: Terraform fmt and validate (foundation)
+#         run: |
+#           terraform -chdir=infra/terraform/envs/foundation init -backend=false
+#           terraform -chdir=infra/terraform/envs/foundation fmt -check -recursive
+#           terraform -chdir=infra/terraform/envs/foundation validate
+
+#       - uses: azure/setup-helm@fe7b79cd5ee1e45176fcad797de68ecaf3ca4814 # v4.2.0
+
+#       - name: Helm lint
+#         run: make helm-lint
+
+#   security:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+#       - name: Run tfsec
+#         uses: aquasecurity/tfsec-action@a73ebc46fba54691e25cbe901656e7b205fb9bf2 # v1.0.0
+#         with:
+#           working_directory: infra/terraform
+
+#       - name: Setup Python for Checkov
+#         uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+#         with:
+#           python-version: '3.11'
+
+#       - name: Run Checkov
+#         run: |
+#           pip install --no-cache-dir checkov==3.2.346
+#           checkov -d infra/terraform --framework terraform --config-file infra/terraform/.checkov.yaml --quiet
+
+#       - name: Trivy config scan
+#         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+#         with:
+#           version: v0.71.0
+#           scan-type: config
+#           scan-ref: infra/terraform
+#           trivyignores: infra/terraform/.trivyignore
+#           severity: HIGH,CRITICAL
+#           exit-code: "1"
+
+#   plan-apply:
+#     # CRITICAL SECURITY FIX: Demands security validation completes successfully before execution
+#     if: github.event_name == 'workflow_dispatch' || (github.ref == 'refs/heads/main' && github.event_name == 'push')
+#     needs: [validate, security]
+#     runs-on: ubuntu-latest
+#     environment: terraform
+#     steps:
+#       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+#       - name: Get GitHub Runner Public IP
+#         id: get_ip
+#         run: |
+#           RUNNER_IP=$(curl -s -4 https://api.ipify.org)
+#           echo "ip=${RUNNER_IP}" >> $GITHUB_OUTPUT
+
+#       - name: Authenticate via GCP OIDC Federation
+#         uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f # v2.1.7
+#         with:
+#           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+#           service_account: ${{ secrets.GCP_TERRAFORM_SA }}
+
+#       - uses: google-github-actions/setup-gcloud@77e7a554d41e2ee56fc945c52dfd3f33d12def9a # v2.1.4
+
+#       - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+#         with:
+#           terraform_version: 1.9.8
+
+#       - name: Write CI Terraform variables
+#         working-directory: infra/terraform/envs/${{ github.event.inputs.stack || 'foundation' }}
+#         env:
+#           PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+#           REGION: ${{ vars.GCP_REGION || 'us-central1' }}
+#           BUILD_CI_SA: ${{ secrets.GCP_BUILD_SA }}
+#           PROMOTE_CI_SA: ${{ secrets.GCP_PROMOTE_SA }}
+#           TFSTATE_BUCKET: ${{ vars.TFSTATE_BUCKET_NAME }}
+#           DNS_ZONE: ${{ vars.DNS_ZONE_NAME || 'tanyadominicsheytech-eu' }}
+#           DNS_DOMAIN: ${{ vars.DNS_DOMAIN || 'tanyadominicsheytech-eu.' }}
+#           MASTER_AUTH_NETS: ${{ vars.GCP_MASTER_AUTHORIZED_NETWORKS_JSON || '[]' }}
+#           GITHUB_ORG: ${{ github.repository_owner }}
+#           GITHUB_REPO: ${{ github.event.repository.name }}
+#           RUNNER_IP: ${{ steps.get_ip.outputs.ip }}
+#         run: |
+#           set -euo pipefail
+#           STACK="${{ github.event.inputs.stack || 'foundation' }}"
+
+#           if [ -z "${PROJECT_ID}" ]; then
+#             echo "::error::Repository variable GCP_PROJECT_ID is not set."
+#             exit 1
+#           fi
+
+#           if [ "$STACK" = "bootstrap" ]; then
+#             BUCKET="${TFSTATE_BUCKET:-tfstate-${PROJECT_ID}}"
+#             cat > ci.auto.tfvars.json <<EOF
+#           {
+#             "project_id": "${PROJECT_ID}",
+#             "region": "${REGION}",
+#             "tfstate_bucket_name": "${BUCKET}",
+#             "github_org": "${GITHUB_ORG}",
+#             "github_repo": "${GITHUB_REPO}"
+#           }
+#           EOF
+#           else
+#             BUILD_SA="${BUILD_CI_SA:-sa-build-ci@${PROJECT_ID}.iam.gserviceaccount.com}"
+#             PROMOTE_SA="${PROMOTE_CI_SA:-sa-promote-ci@${PROJECT_ID}.iam.gserviceaccount.com}"
+            
+#             # Merges default configured target systems with the dynamic execution node IP address safely via jq
+#             echo '${MASTER_AUTH_NETS}' > initial_nets.json
+#             jq --arg ip "${RUNNER_IP}/32" '. += [{"cidr_block": $ip, "display_name": "github-actions-runner"}]' initial_nets.json > dynamic_nets.json
+
+#             cat > ci.auto.tfvars.json <<EOF
+#           {
+#             "project_id": "${PROJECT_ID}",
+#             "region": "${REGION}",
+#             "build_ci_sa_email": "${BUILD_SA}",
+#             "promote_ci_sa_email": "${PROMOTE_SA}",
+#             "dns_zone_name": "${DNS_ZONE}",
+#             "dns_domain": "${DNS_DOMAIN}",
+#             "master_authorized_networks": $(cat dynamic_nets.json)
+#           }
+#           EOF
+#           fi
+
+#           echo "Generated ci.auto.tfvars.json for ${STACK}:"
+#           jq 'del(.master_authorized_networks) | . + {master_authorized_networks: "<redacted>"}' ci.auto.tfvars.json
+
+#       - name: Terraform init/plan/apply
+#         working-directory: infra/terraform/envs/${{ github.event.inputs.stack || 'foundation' }}
+#         run: |
+#           terraform init -input=false
+          
+#           # Fix: Handles standard pull-request or branch push updates seamlessly
+#           ACTION="${{ github.event.inputs.action || 'plan' }}"
+#           if [ "${{ github.event_name }}" = "push" ] && [ "${{ github.ref }}" = "refs/heads/main" ]; then
+#             ACTION="apply"
+#           fi
+
+#           if [ "${ACTION}" = "apply" ]; then
+#             terraform apply -input=false -auto-approve
+#           else
+#             terraform plan -input=false
+#           fi
 
 
 
