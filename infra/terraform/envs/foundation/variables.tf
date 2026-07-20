@@ -25,16 +25,23 @@ variable "zone" {
 # Automated Workload Identities (CI/CD)
 # ==========================================
 
-variable "build_ci_sa_name" {
+variable "build_ci_sa_email" {
   type        = string
-  description = "The account ID prefix string for the build CI service account."
+  description = "The email address of the application artifact builder service account"
+  default     = ""
 }
 
-variable "promote_ci_sa_name" {
+variable "promote_ci_sa_email" {
   type        = string
-  description = "The account ID prefix string for the promotional deployment CI service account."
+  description = "The email address of the image release promoter service account"
+  default     = ""
 }
 
+variable "terraform_sa_email" {
+  type        = string
+  description = "The email address of the infrastructure deployer service account"
+  default     = ""
+}
 # ==========================================
 # Global Ingress & Domain Routing
 # ==========================================
