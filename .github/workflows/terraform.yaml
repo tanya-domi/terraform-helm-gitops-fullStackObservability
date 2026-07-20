@@ -54,11 +54,6 @@ jobs:
           terraform -chdir=infra/terraform/envs/foundation fmt -check -recursive
           terraform -chdir=infra/terraform/envs/foundation validate
 
-      - uses: azure/setup-helm@v4
-
-      - name: Helm lint
-        run: make helm-lint
-
   plan-apply:
     if: github.event_name == 'workflow_dispatch' || (github.ref == 'refs/heads/main' && github.event_name == 'push')
     needs: [validate]

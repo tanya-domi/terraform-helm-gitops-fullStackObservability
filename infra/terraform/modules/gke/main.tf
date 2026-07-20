@@ -50,7 +50,6 @@ resource "google_container_cluster" "primary" {
     enabled = true
   }
 
-  # Free Tier Control: Silence verbose control plane logging fees
   logging_config {
     enable_components = []
   }
