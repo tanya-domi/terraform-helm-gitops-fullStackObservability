@@ -182,6 +182,7 @@ resource "google_storage_bucket" "terraform_state" {
   labels = local.labels # Added: Metadata tracking labels
 }
 
+
 # ==============================================================================
 # 2. INDEPENDENT PRODUCTION SERVICE ACCOUNTS (LEAST PRIVILEGE)
 # ==============================================================================
@@ -236,6 +237,12 @@ resource "google_project_iam_member" "project_artifact_admin" {
   member  = "serviceAccount:${google_service_account.app_promoter.email}"
 }
 
+
+resource "google_storage_bucket_iam_member" "tf_sa_storage_admin" {
+  bucket = var.bucket
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:sa-boutique-terraform-ci@project-1cdbea51-6334-4e02-967.iam.gserviceaccount.com"
+}
 # ==============================================================================
 # 4. WORKLOAD IDENTITY FEDERATION ENGINE (OIDC POOL)
 # ==============================================================================
@@ -331,6 +338,8 @@ resource "github_actions_secret" "gcp_secrets" {
   secret_name = each.value.secret_name
   value       = each.value.value
 }
+
+
 
 # ==============================================================================
 # 7. PROGRAMMATIC COST CONTROLS (BILLING BUDGET)
