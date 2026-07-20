@@ -118,7 +118,7 @@ jobs:
             BUILD_SA="${BUILD_CI_SA:-sa-build-ci@${PROJECT_ID}.iam.gserviceaccount.com}"
             PROMOTE_SA="${PROMOTE_CI_SA:-sa-promote-ci@${PROJECT_ID}.iam.gserviceaccount.com}"
             
-            echo '${MASTER_AUTH_NETS}' > initial_nets.json
+            echo "${MASTER_AUTH_NETS}" > initial_nets.json  
             jq --arg ip "${RUNNER_IP}/32" '. += [{"cidr_block": $ip, "display_name": "github-actions-runner"}]' initial_nets.json > dynamic_nets.json
 
             cat > ci.auto.tfvars.json <<EOF
