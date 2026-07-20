@@ -512,7 +512,7 @@ resource "google_service_account" "promote_ci" {
   project      = var.project_id
 }
 # ==============================================================================
-# Managed Cache Layer (Cloud Memorystore Redis)
+# Managed Cloud Memorystore Redis
 # ==============================================================================
 resource "google_compute_global_address" "redis_private_ip_range" {
   name          = "${local.name_prefix}-redis-private-ip"
