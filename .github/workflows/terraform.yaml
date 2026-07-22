@@ -90,7 +90,7 @@ jobs:
           SA_GKE_NODES: ${{ vars.SA_GKE_NODES || 'gke-node-sa' }}
           TFSTATE_BUCKET: ${{ vars.TFSTATE_BUCKET_NAME }}
           DNS_ZONE: ${{ vars.DNS_ZONE_NAME || 'tanyadominicsheytech-eu' }}
-          DNS_DOMAIN: ${{ vars.DNS_DOMAIN || 'tanyadominicsheytech-eu.' }}
+          DNS_DOMAIN: ${{ vars.DNS_DOMAIN || 'tanyadominicsheytech.eu.' }}
           MASTER_AUTH_NETS: ${{ vars.GCP_MASTER_AUTHORIZED_NETWORKS_JSON || '[]' }}
           GITHUB_ORG: ${{ github.repository_owner }}
           GITHUB_REPO: ${{ github.event.repository.name }}
@@ -247,8 +247,8 @@ jobs:
 #           PROMOTE_CI_SA: ${{ secrets.GCP_PROMOTE_SA }}
 #           SA_GKE_NODES: ${{ vars.SA_GKE_NODES || 'gke-node-sa' }}
 #           TFSTATE_BUCKET: ${{ vars.TFSTATE_BUCKET_NAME }}
-#           DNS_ZONE: ${{ vars.DNS_ZONE_NAME || 'tanyadominicsheytech-eu' }}
-#           DNS_DOMAIN: ${{ vars.DNS_DOMAIN || 'tanyadominicsheytech-eu.' }}
+#           DNS_ZONE: ${{ vars.DNS_ZONE_NAME || 'tanyadominicsheytech.eu' }}
+#           DNS_DOMAIN: ${{ vars.DNS_DOMAIN || 'tanyadominicsheytech.eu.' }}
 #           MASTER_AUTH_NETS: ${{ vars.GCP_MASTER_AUTHORIZED_NETWORKS_JSON || '[]' }}
 #           GITHUB_ORG: ${{ github.repository_owner }}
 #           GITHUB_REPO: ${{ github.event.repository.name }}
