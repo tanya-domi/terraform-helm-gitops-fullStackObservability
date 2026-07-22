@@ -87,6 +87,7 @@ jobs:
           REGION: ${{ vars.GCP_REGION || 'us-central1' }}
           BUILD_CI_SA: ${{ secrets.GCP_BUILD_SA }}
           PROMOTE_CI_SA: ${{ secrets.GCP_PROMOTE_SA }}
+          SA_GKE_NODES: ${{ vars.SA_GKE_NODES || 'gke-node-sa' }}
           TFSTATE_BUCKET: ${{ vars.TFSTATE_BUCKET_NAME }}
           DNS_ZONE: ${{ vars.DNS_ZONE_NAME || 'tanyadominicsheytech-eu' }}
           DNS_DOMAIN: ${{ vars.DNS_DOMAIN || 'tanyadominicsheytech-eu.' }}
@@ -125,8 +126,9 @@ jobs:
           {
             "project_id": "${PROJECT_ID}",
             "region": "${REGION}",
-            "build_ci_sa_email": "${BUILD_SA}",
-            "promote_ci_sa_email": "${PROMOTE_SA}",
+            "build_ci_sa_name": "${BUILD_SA}",
+            "promote_ci_sa_name": "${PROMOTE_SA}",
+            "sa-gke-nodes": "${SA_GKE_NODES}",
             "dns_zone_name": "${DNS_ZONE}",
             "dns_domain": "${DNS_DOMAIN}",
             "master_authorized_networks": $(cat dynamic_nets.json)
