@@ -31,5 +31,5 @@ override.tf.json
 .terraform.lock.hcl
 infra/terraform/envs/foundation/destroy_foundation.
 local_override.auto.tfvars
-
+infra/terraform/envs/foundation/tfplan-foundation.binary
 

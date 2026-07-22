@@ -60,9 +60,19 @@ variable "vpc_name" {
   description = "Name of the target VPC network."
 }
 
+# variable "sa-gke-nodes" {
+#   type        = string
+#   description = "The account ID prefix string for GKE worker nodes."
+# }
 variable "sa-gke-nodes" {
   type        = string
-  description = "The account ID prefix string for GKE worker nodes."
+  description = "The service account ID for GKE node pool"
+  default     = "sa-gke-nodes-dev"
+
+  validation {
+    condition     = length(var.sa-gke-nodes) >= 6 && length(var.sa-gke-nodes) <= 30 && can(regex("^[a-z]([-a-z0-9]*[a-z0-9])$", var.sa-gke-nodes))
+    error_message = "The sa-gke-nodes variable must be between 6 and 30 characters, start with a lowercase letter, and contain only lowercase letters, numbers, and hyphens."
+  }
 }
 
 variable "subnet_cidr" {

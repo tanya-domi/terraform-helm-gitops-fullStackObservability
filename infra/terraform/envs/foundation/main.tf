@@ -471,7 +471,7 @@ resource "google_artifact_registry_repository_iam_member" "build_ci_writer_dev" 
   location   = var.region
   repository = "${var.env}-app-images"
   role       = "roles/artifactregistry.writer"
-  member     = "serviceAccount:${var.build_ci_sa_name}"
+  member     = "serviceAccount:${google_service_account.build_ci.email}" #"serviceAccount:${var.build_ci_sa_name}"
   depends_on = [module.custom_artifact_registry]
 }
 
@@ -602,7 +602,7 @@ resource "google_storage_bucket_iam_member" "tempo_perms" {
 
 resource "google_storage_bucket_iam_member" "thanos_perms" {
   bucket = google_storage_bucket.thanos_store.name
-  role   = "roles/storage.admin"
+  role   = "roles/storage.objectAdmin"
   member = "serviceAccount:${google_service_account.observability_storage_sa.email}"
 }
 
