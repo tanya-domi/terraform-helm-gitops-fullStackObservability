@@ -1,0 +1,37 @@
+# Allow the gateway (residing in the 'platform' namespace) 
+# to route traffic to the Grafana service (residing in the 'monitoring' namespace).
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-platform-gateway-to-grafana
+  namespace: monitoring   
+spec:
+  from:
+    - group: gateway.networking.k8s.io
+      kind: HTTPRoute
+      namespace: platform   # Where boutique-gateway lives
+  to:
+    - group: ""
+      kind: Service
+      name: grafana        
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: grafana-server
+  namespace: platform       
+spec:
+  parentRefs:
+    - name: boutique-gateway
+      namespace: platform
+  hostnames:
+    - grafana.tanyadominicsheytech.eu
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      backendRefs:
+        - name: grafana         
+          namespace: monitoring # Namespace where Grafana is deployed
+          port: 80              # Adjust to match your Grafana service port (e.g., 80, 3000, or 443)

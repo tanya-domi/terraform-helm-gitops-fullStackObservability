@@ -1,3 +1,51 @@
+# apiVersion: argoproj.io/v1alpha1
+# kind: ApplicationSet
+# metadata:
+#   name: boutique-services-autosync
+#   namespace: argocd
+# spec:
+#   generators:
+#     - matrix:
+#         generators:
+#           - list:
+#               elements:
+#                 - env: dev
+#                 - env: stage
+#           - list:
+#               elements:
+#                 - service: frontend
+#                   chart: charts/frontend
+#                 - service: cartservice
+#                   chart: charts/cartservice
+#                 - service: currencyservice
+#                   chart: charts/currencyservice
+#                 - service: productcatalogservice
+#                   chart: charts/productcatalogservice
+#                 - service: redis-cart
+#                   chart: charts/redis-cart
+#   template:
+#     metadata:
+#       name: "{{service}}-{{env}}"
+#     spec:
+#       project: boutique-platform
+#       source:
+#         repoURL: https://github.com/YOUR_GITHUB_ORG/micser-apps-GCP-Terraform-Helm-GitOps-monitoring.git
+#         targetRevision: main
+#         path: "{{chart}}"
+#         helm:
+#           releaseName: "{{service}}"
+#           valueFiles:
+#             - ../../gitops/envs/{{env}}/values-{{service}}.yaml
+#       destination:
+#         server: https://kubernetes.default.svc
+#         namespace: "{{env}}"
+#       syncPolicy:
+#         automated:
+#           prune: true
+#           selfHeal: true
+#         syncOptions:
+#           - CreateNamespace=true
+
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -10,38 +58,61 @@ spec:
           - list:
               elements:
                 - env: dev
+                  namespace: boutique-dev
                 - env: stage
+                  namespace: boutique-stage
+                - env: prod
+                  namespace: boutique-prod
           - list:
               elements:
                 - service: frontend
-                  chart: charts/frontend
+                  chart: charts/microservices/frontend
                 - service: cartservice
-                  chart: charts/cartservice
+                  chart: charts/microservices/cartservice
                 - service: currencyservice
-                  chart: charts/currencyservice
+                  chart: charts/microservices/currencyservice
                 - service: productcatalogservice
-                  chart: charts/productcatalogservice
-                - service: redis-cart
-                  chart: charts/redis-cart
+                  chart: charts/microservices/productcatalogservice
+                - service: adservice
+                  chart: charts/microservices/adservice
+                - service: checkoutservice
+                  chart: charts/microservices/checkoutservice
+                - service: emailservice
+                  chart: charts/microservices/emailservice
+                - service: loadgenerator
+                  chart: charts/microservices/loadgenerator
+                - service: paymentservice
+                  chart: charts/microservices/paymentservice
+                - service: recommendationservice
+                  chart: charts/microservices/recommendationservice
+                - service: shippingservice
+                  chart: charts/microservices/shippingservice
   template:
     metadata:
       name: "{{service}}-{{env}}"
+      labels:
+        environment: "{{env}}"
+        service: "{{service}}"
     spec:
-      project: boutique-platform
+      project: default
       source:
-        repoURL: https://github.com/YOUR_GITHUB_ORG/micser-apps-GCP-Terraform-Helm-GitOps-monitoring.git
-        targetRevision: main
+        repoURL: https://github.com/tanya-domi/terraform-helm-gitops-fullStackObservability.git
+        targetRevision: HEAD
         path: "{{chart}}"
         helm:
           releaseName: "{{service}}"
           valueFiles:
-            - ../../gitops/envs/{{env}}/values-{{service}}.yaml
+            - values.yaml
+            # Traverse up from charts/microservices/<service>/ to repo root, then into gitops/envs/<env>/
+            - ../../../gitops/envs/{{env}}/globals.yaml
+            - ../../../gitops/envs/{{env}}/values-{{service}}.yaml
       destination:
         server: https://kubernetes.default.svc
-        namespace: "{{env}}"
+        namespace: "{{namespace}}"
       syncPolicy:
         automated:
           prune: true
           selfHeal: true
         syncOptions:
           - CreateNamespace=true
+          - ApplyOutOfSyncOnly=true

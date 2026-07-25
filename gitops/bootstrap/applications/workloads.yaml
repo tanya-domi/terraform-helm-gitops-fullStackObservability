@@ -8,7 +8,7 @@ metadata:
 spec:
   project: boutique-platform
   source:
-    repoURL: https://github.com/tanya-domi/terraform-helm-gitops-fullStackObservability
+    repoURL: https://github.com/tanya-domi/terraform-helm-gitops-fullStackObservability.git
     targetRevision: main
     path: gitops/applicationsets
   destination:

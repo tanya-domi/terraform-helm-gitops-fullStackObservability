@@ -2,36 +2,78 @@
   "frontend": {
     "dockerfile": "apps/frontend/Dockerfile",
     "context": "apps/frontend",
-    "chart": "charts/frontend",
+    "chart": "charts/microservices/frontend",
     "port": 8080,
     "public": true
+  },
+  "adservice": {
+    "dockerfile": "apps/adservice/Dockerfile",
+    "context": "apps/adservice",
+    "chart": "charts/microservices/adservice",
+    "port": 9555,
+    "public": false
   },
   "cartservice": {
     "dockerfile": "apps/cartservice/src/Dockerfile",
     "context": "apps/cartservice/src",
-    "chart": "charts/cartservice",
+    "chart": "charts/microservices/cartservice",
     "port": 7070,
+    "public": false
+  },
+  "checkoutservice": {
+    "dockerfile": "apps/checkoutservice/Dockerfile",
+    "context": "apps/checkoutservice",
+    "chart": "charts/microservices/checkoutservice",
+    "port": 5050,
     "public": false
   },
   "currencyservice": {
     "dockerfile": "apps/currencyservice/Dockerfile",
     "context": "apps/currencyservice",
-    "chart": "charts/currencyservice",
+    "chart": "charts/microservices/currencyservice",
     "port": 7000,
+    "public": false
+  },
+  "emailservice": {
+    "dockerfile": "apps/emailservice/Dockerfile",
+    "context": "apps/emailservice",
+    "chart": "charts/microservices/emailservice",
+    "port": 8080,
+    "public": false
+  },
+  "loadgenerator": {
+    "dockerfile": "apps/loadgenerator/Dockerfile",
+    "context": "apps/loadgenerator",
+    "chart": "charts/microservices/loadgenerator",
+    "port": 8089,
+    "public": false
+  },
+  "paymentservice": {
+    "dockerfile": "apps/paymentservice/Dockerfile",
+    "context": "apps/paymentservice",
+    "chart": "charts/microservices/paymentservice",
+    "port": 50051,
     "public": false
   },
   "productcatalogservice": {
     "dockerfile": "apps/productcatalogservice/Dockerfile",
     "context": "apps/productcatalogservice",
-    "chart": "charts/productcatalogservice",
+    "chart": "charts/microservices/productcatalogservice",
     "port": 3550,
     "public": false
   },
-  "redis-cart": {
-    "dockerfile": "apps/redis-cart/Dockerfile",
-    "context": "apps/redis-cart",
-    "chart": "charts/redis-cart",
-    "port": 6379,
+  "recommendationservice": {
+    "dockerfile": "apps/recommendationservice/Dockerfile",
+    "context": "apps/recommendationservice",
+    "chart": "charts/microservices/recommendationservice",
+    "port": 8080,
+    "public": false
+  },
+  "shippingservice": {
+    "dockerfile": "apps/shippingservice/Dockerfile",
+    "context": "apps/shippingservice",
+    "chart": "charts/microservices/shippingservice",
+    "port": 50051,
     "public": false
   }
 }

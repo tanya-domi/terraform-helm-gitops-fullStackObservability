@@ -1,0 +1,95 @@
+name: Helm Chart Publish
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'helm/**/Chart.yaml'
+      - 'helm/**/templates/**'
+    # paths-ignore:
+    #   - 'helm/**/values.yaml'
+    #   - 'helm/online-boutique-app/env/**'
+    #   - 'helm/**/charts/**/*.tgz'
+    #   - 'helm/**/Chart.lock'
+
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT_EMAIL }}
+          token_format: access_token
+
+      - name: Login to Artifact Registry
+        run: |
+          echo ${{ steps.auth.outputs.access_token }} | helm registry login us-central1-docker.pkg.dev --username oauth2accesstoken --password-stdin
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      # - name: Lint All Charts
+      #   run: |
+      #     echo "Linting Common Chart..."
+      #     helm lint helm/online-boutique-common/
+          
+      #     echo "Linting Services..."
+      #     for chart in helm/online-boutique-services/*/; do
+      #       if [ -f "${chart}Chart.yaml" ]; then
+      #         # We build dependencies first so lint can verify them
+      #         helm dependency build "$chart"
+      #         helm lint "$chart"
+      #       fi
+      #     done
+
+      #     echo "Linting Umbrella Chart..."
+      #     helm dependency build helm/online-boutique-app/
+      #     helm lint helm/online-boutique-app/
+
+      - name: Package and Push Sub-Charts
+        run: |
+          REPO_URL="oci://us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/helm-charts"
+
+          echo "Processing Common Chart..."
+          helm package helm/online-boutique-common/
+          helm push online-boutique-common-*.tgz $REPO_URL
+          rm *.tgz
+
+        
+          for chart in helm/online-boutique-services/*/; do
+            if [ -f "${chart}Chart.yaml" ]; then
+              echo "Processing service: $chart"
+              helm dependency build "$chart"
+              helm package "$chart"
+              helm push *.tgz $REPO_URL
+              rm *.tgz
+            fi
+          done
+
+      
+      - name: Build Umbrella Chart Local Dependencies
+        run: |
+          echo "Building local path dependencies for Umbrella App..."
+          helm dependency build helm/online-boutique-app/
+
+      - name: Package and Push Umbrella Chart
+        run: |
+          REPO_URL="oci://us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/helm-charts"
+          echo "Processing Umbrella App..."
+          helm package helm/online-boutique-app/
+          helm push online-boutique-app-*.tgz $REPO_URL
+          rm *.tgz

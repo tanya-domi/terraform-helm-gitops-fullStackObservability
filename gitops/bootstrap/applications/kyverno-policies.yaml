@@ -8,7 +8,7 @@ metadata:
 spec:
   project: boutique-platform
   source:
-    repoURL: https://github.com/tanya-domi/terraform-helm-gitops-fullStackObservability
+    repoURL: https://github.com/tanya-domi/terraform-helm-gitops-fullStackObservability.git
     targetRevision: main
     path: policies/kyverno
   destination:
@@ -18,3 +18,6 @@ spec:
     automated:
       prune: true
       selfHeal: true
+
+# sync-wave: "4" ensures that your security policies are applied after the core platform infrastructure, the Kyverno controller itself, 
+# and your baseline workloads have been fully initialized

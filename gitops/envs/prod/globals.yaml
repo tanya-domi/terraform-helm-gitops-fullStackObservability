@@ -1,0 +1,21 @@
+global:
+  configMapName: online-boutique-prod-config
+  
+  services:
+    productcatalogservice: "productcatalogservice.boutique-prod.svc.cluster.local:3550"
+    currencyservice: "currencyservice.boutique-prod.svc.cluster.local:7000"
+    cartservice: "cartservice.boutique-prod.svc.cluster.local:7070"
+    recommendationservice: "recommendationservice.boutique-prod.svc.cluster.local:8080"
+    shippingservice: "shippingservice.boutique-prod.svc.cluster.local:50051"
+    checkoutservice: "checkoutservice.boutique-prod.svc.cluster.local:5050"
+    adservice: "adservice.boutique-prod.svc.cluster.local:9555"
+
+  features:
+    enableTracing: "true"
+    profiler_enabled: "false"
+
+  gateway:
+    gatewayName: boutique-gateway
+    gatewayNamespace: platform
+    host: tanyadominicsheytech.eu  # Production apex/root domain
+    enabled: true

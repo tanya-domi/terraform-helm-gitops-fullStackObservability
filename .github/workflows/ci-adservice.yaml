@@ -1,0 +1,23 @@
+name: CI adservice
+
+permissions:
+  contents: write
+  id-token: write
+  pull-requests: write
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "apps/adservice/**"
+      - "charts/microservices/adservice/**"
+      - ".github/workflows/reusable-service-ci.yml"
+      - ".github/workflows/ci-adservice.yml"
+
+jobs:
+  ci:
+    uses: ./.github/workflows/reusable-service-ci.yml
+    with:
+      service: adservice
+    secrets: inherit

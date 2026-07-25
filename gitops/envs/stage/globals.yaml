@@ -1,0 +1,21 @@
+global:
+  configMapName: online-boutique-stage-config
+  
+  services:
+    productcatalogservice: "productcatalogservice.boutique-stage.svc.cluster.local:3550"
+    currencyservice: "currencyservice.boutique-stage.svc.cluster.local:7000"
+    cartservice: "cartservice.boutique-stage.svc.cluster.local:7070"
+    recommendationservice: "recommendationservice.boutique-stage.svc.cluster.local:8080"
+    shippingservice: "shippingservice.boutique-stage.svc.cluster.local:50051"
+    checkoutservice: "checkoutservice.boutique-stage.svc.cluster.local:5050"
+    adservice: "adservice.boutique-stage.svc.cluster.local:9555"
+
+  features:
+    enableTracing: "true"
+    profiler_enabled: "false"
+
+  gateway:
+    gatewayName: boutique-gateway
+    gatewayNamespace: platform
+    host: stage.tanyadominicsheytech.eu
+    enabled: true

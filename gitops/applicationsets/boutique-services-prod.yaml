@@ -13,27 +13,40 @@ spec:
           - list:
               elements:
                 - service: frontend
-                  chart: charts/frontend
+                  chart: charts/microservices/frontend
                 - service: cartservice
-                  chart: charts/cartservice
+                  chart: charts/microservices/cartservice
                 - service: currencyservice
-                  chart: charts/currencyservice
+                  chart: charts/microservices/currencyservice
                 - service: productcatalogservice
-                  chart: charts/productcatalogservice
-                - service: redis-cart
-                  chart: charts/redis-cart
+                  chart: charts/microservices/productcatalogservice
+                - service: adservice
+                  chart: charts/microservices/adservice
+                - service: checkoutservice
+                  chart: charts/microservices/checkoutservice
+                - service: emailservice
+                  chart: charts/microservices/emailservice
+                - service: loadgenerator
+                  chart: charts/microservices/loadgenerator
+                - service: paymentservice
+                  chart: charts/microservices/paymentservice
+                - service: recommendationservice
+                  chart: charts/microservices/recommendationservice
+                - service: shippingservice
+                  chart: charts/microservices/shippingservice
   template:
     metadata:
       name: "{{service}}-{{env}}"
     spec:
       project: boutique-platform
       source:
-        repoURL: https://github.com/YOUR_GITHUB_ORG/micser-apps-GCP-Terraform-Helm-GitOps-monitoring.git
+        repoURL: https://github.com/tanya-domi/terraform-helm-gitops-fullStackObservability.git
         targetRevision: main
         path: "{{chart}}"
         helm:
           releaseName: "{{service}}"
           valueFiles:
+            - ../../../gitops/envs/{{env}}/globals.yaml
             - ../../gitops/envs/{{env}}/values-{{service}}.yaml
       destination:
         server: https://kubernetes.default.svc

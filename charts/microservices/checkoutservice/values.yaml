@@ -1,0 +1,77 @@
+replicaCount: 1
+
+env: dev
+
+
+image:
+  repository: us-central1-docker.pkg.dev/project-1cdbea51-6334-4e02-967/app-images/checkoutservice
+  tag: "v0.1.20"
+  pullPolicy: IfNotPresent
+
+terminationGracePeriodSeconds: 5
+
+annotations:
+  instrumentation.opentelemetry.io/inject-dotnet: "true"
+  resource.opentelemetry.io/service.name: "checkoutservice"
+
+containers:
+  - name: server
+    ports:
+      - containerPort: 5050
+        name: grpc
+    env:
+      - name: PORT
+        value: "5050"
+      - name: OTEL_SERVICE_NAME
+        value: "checkoutservice"
+      # Upstream gRPC connections inherited or overridden here if needed
+      - name: SHIPPING_SERVICE_ADDR
+        value: "shippingservice:50051"
+      - name: PRODUCT_CATALOG_SERVICE_ADDR
+        value: "productcatalogservice:3550"
+      - name: CURRENCY_SERVICE_ADDR
+        value: "currencyservice:7000"
+      - name: CART_SERVICE_ADDR
+        value: "cartservice:7070"
+      - name: PAYMENT_SERVICE_ADDR
+        value: "paymentservice:50051"
+      - name: EMAIL_SERVICE_ADDR
+        value: "emailservice:5000"
+
+    readinessProbe:
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      grpc:
+        port: 5050
+
+    livenessProbe:
+      initialDelaySeconds: 15
+      periodSeconds: 10
+      grpc:
+        port: 5050
+
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+
+service:
+  enabled: true
+  type: ClusterIP
+  name: grpc
+  port: 5050
+  targetPort: 5050
+
+serviceAccount:
+  create: true
+  name: "checkoutservice"
+
+releaseInfo:
+  enabled: true
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1

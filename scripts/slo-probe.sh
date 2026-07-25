@@ -3,7 +3,7 @@
 # Usage: ./scripts/slo-probe.sh [URL]
 set -euo pipefail
 
-URL="${1:-https://boutique.example.com}"
+URL="${1:-https://tanyadominicsheytech.eu}"
 MAX_LATENCY_MS="${SLO_MAX_LATENCY_MS:-2000}"
 
 echo "SLO probe: ${URL} (max latency ${MAX_LATENCY_MS}ms)"

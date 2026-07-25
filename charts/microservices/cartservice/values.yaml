@@ -1,0 +1,63 @@
+replicaCount: 1
+
+env: dev
+
+
+image:
+  repository: us-central1-docker.pkg.dev/project-1cdbea51-6334-4e02-967/app-images/cartservice
+  tag: "v0.1.20"
+  pullPolicy: IfNotPresent
+
+terminationGracePeriodSeconds: 5
+
+annotations:
+  instrumentation.opentelemetry.io/inject-dotnet: "true"
+  resource.opentelemetry.io/service.name: "cartservice"
+
+containers:
+  - name: server
+    ports:
+      - containerPort: 7070
+        name: grpc
+    env:
+      - name: OTEL_SERVICE_NAME
+        value: "cartservice"
+      - name: REDIS_ADDR
+        valueFrom:
+          secretKeyRef:
+            name: redis-secret # Standardized secret name populated by ESO
+            key: redis-address
+
+    readinessProbe:
+      initialDelaySeconds: 20
+      grpc:
+        port: 7070
+
+    livenessProbe:
+      initialDelaySeconds: 25
+      periodSeconds: 15
+      grpc:
+        port: 7070
+
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+
+service:
+  enabled: true
+  type: ClusterIP
+  name: grpc
+  port: 7070
+  targetPort: 7070
+
+serviceAccount:
+  create: true
+  name: "cartservice"
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1

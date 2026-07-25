@@ -1,0 +1,21 @@
+global:
+  configMapName: online-boutique-dev-config
+  
+  services:
+    productcatalogservice: "productcatalogservice.boutique-dev.svc.cluster.local:3550"
+    currencyservice: "currencyservice.boutique-dev.svc.cluster.local:7000"
+    cartservice: "cartservice.boutique-dev.svc.cluster.local:7070"
+    recommendationservice: "recommendationservice.boutique-dev.svc.cluster.local:8080"
+    shippingservice: "shippingservice.boutique-dev.svc.cluster.local:50051"
+    checkoutservice: "checkoutservice.boutique-dev.svc.cluster.local:5050"
+    adservice: "adservice.boutique-dev.svc.cluster.local:9555"
+
+  features:
+    enableTracing: "true"
+    profiler_enabled: "false"
+
+  gateway:
+    gatewayName: boutique-gateway
+    gatewayNamespace: platform
+    host: dev.tanyadominicsheytech.eu
+    enabled: true

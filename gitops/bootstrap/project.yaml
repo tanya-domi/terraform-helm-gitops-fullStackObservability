@@ -6,7 +6,7 @@ metadata:
 spec:
   description: Online Boutique platform and workloads on GKE
   sourceRepos:
-    - https://github.com/tanya-domi/terraform-helm-gitops-fullStackObservability
+    - https://github.com/tanya-domi/terraform-helm-gitops-fullStackObservability.git
   destinations:
     - namespace: '*'
       server: https://kubernetes.default.svc

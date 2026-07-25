@@ -29,7 +29,22 @@ cert_map_name = "boutique-ingress-cert-map"
 # ==============================================================================
 # Control Plane Security Access Control
 # ==============================================================================
+# master_authorized_networks = [
+#   { cidr_block = "79.224.162.10/32", display_name = "wsl-local-machine" },
+#   { cidr_block = "203.0.113.11/32", display_name = "home-old" },
+# ]
+
+# master_authorized_networks = [
+#   { 
+#     cidr_block   = "79.224.162.0/24"
+#     display_name = "wsl-local-machine" 
+#   }
+# ]
+
+
 master_authorized_networks = [
-  { cidr_block = "79.224.170.140/32", display_name = "wsl-local-machine" },
-  { cidr_block = "203.0.113.11/32", display_name = "home-old" },
+  { 
+    cidr_block   = "79.224.0.0/14"
+    display_name = "dtag-telekom-dynamic-pool" 
+  }
 ]
