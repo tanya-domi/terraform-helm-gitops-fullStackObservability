@@ -12,12 +12,12 @@ on:
     paths:
       - "apps/adservice/**"
       - "charts/microservices/adservice/**"
-      - ".github/workflows/reusable-service-ci.yml"
+      - ".github/workflows/reusable-service-ci.yaml"
       - ".github/workflows/ci-adservice.yml"
 
 jobs:
   ci:
-    uses: ./.github/workflows/reusable-service-ci.yml
+    uses: ./.github/workflows/reusable-service-ci.yaml
     with:
       service: adservice
     secrets: inherit

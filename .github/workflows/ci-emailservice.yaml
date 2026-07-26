@@ -12,12 +12,12 @@ on:
     paths:
       - "apps/checkoutservice/**"
       - "charts/microservices/checkoutservice/**"
-      - ".github/workflows/reusable-service-ci.yml"
+      - ".github/workflows/reusable-service-ci.yaml"
       - ".github/workflows/ci-checkoutservice.yml"
 
 jobs:
   ci:
-    uses: ./.github/workflows/reusable-service-ci.yml
+    uses: ./.github/workflows/reusable-service-ci.yaml
     with:
       service: emailservice
     secrets: inherit

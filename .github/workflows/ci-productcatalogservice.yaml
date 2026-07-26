@@ -12,12 +12,12 @@ on:
     paths:
       - "apps/productcatalogservice/**"
       - "charts/microservices/productcatalogservice/**"
-      - ".github/workflows/reusable-service-ci.yml"
+      - ".github/workflows/reusable-service-ci.yaml"
       - ".github/workflows/ci-productcatalogservice.yml"
 
 jobs:
   ci:
-    uses: ./.github/workflows/reusable-service-ci.yml
+    uses: ./.github/workflows/reusable-service-ci.yaml
     with:
       service: productcatalogservice
     secrets: inherit

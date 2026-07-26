@@ -12,12 +12,12 @@ on:
     paths:
       - "apps/loadgenerator/**"
       - "charts/microservices/loadgenerator/**"
-      - ".github/workflows/reusable-service-ci.yml"
+      - ".github/workflows/reusable-service-ci.yaml"
       - ".github/workflows/ci-loadgenerator.yml"
 
 jobs:
   ci:
-    uses: ./.github/workflows/reusable-service-ci.yml
+    uses: ./.github/workflows/reusable-service-ci.yaml
     with:
       service: loadgenerator
     secrets: inherit

@@ -12,12 +12,12 @@ on:
     paths:
       - "apps/recommendationservice/**"
       - "charts/microservices/recommendationservice/**"
-      - ".github/workflows/reusable-service-ci.yml"
+      - ".github/workflows/reusable-service-ci.yaml"
       - ".github/workflows/ci-recommendationservice.yml"
 
 jobs:
   ci:
-    uses: ./.github/workflows/reusable-service-ci.yml
+    uses: ./.github/workflows/reusable-service-ci.yaml
     with:
       service: recommendationservice
     secrets: inherit

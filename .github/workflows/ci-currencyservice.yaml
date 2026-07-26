@@ -12,12 +12,12 @@ on:
     paths:
       - "apps/currencyservice/**"
       - "charts/microservices/currencyservice/**"
-      - ".github/workflows/reusable-service-ci.yml"
+      - ".github/workflows/reusable-service-ci.yaml"
       - ".github/workflows/ci-currencyservice.yml"
 
 jobs:
   ci:
-    uses: ./.github/workflows/reusable-service-ci.yml
+    uses: ./.github/workflows/reusable-service-ci.yaml
     with:
       service: currencyservice
     secrets: inherit
