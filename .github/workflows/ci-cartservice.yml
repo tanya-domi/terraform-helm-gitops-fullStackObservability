@@ -15,11 +15,6 @@ on:
       - ".github/workflows/reusable-service-ci.yaml"
       - ".github/workflows/ci-cartservice.yml"
 
-  pull_request:
-    branches: [main]
-    paths:
-      - "apps/cartservice/**"
-      - "charts/microservices/cartservice/**"
 
 jobs:
   ci:

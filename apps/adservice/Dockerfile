@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM --platform=$BUILDPLATFORM eclipse-temurin:21.0.5_11-jdk@sha256:a20cfa6afdbf57ff2c4de77ae2d0e3725a6349f1936b5ad7c3d1b06f6d1b840a AS builder
+# Define a default value so it's not empty if the builder fails to provide it
+ARG BUILDPLATFORM=linux/amd64
+
+FROM --platform=$BUILDPLATFORM eclipse-temurin:24.0.2_12-jdk-noble@sha256:dacac8e9a0df0d2bd24e702b4431132875c249930b70555ebd7ca285b5bee684 AS builder
 
 WORKDIR /app
 
@@ -25,7 +28,7 @@ COPY . .
 RUN chmod +x gradlew
 RUN ./gradlew installDist
 
-FROM eclipse-temurin:21.0.5_11-jre-alpine@sha256:4300bfe1e11f3dfc3e3512f39939f9093cf18d0e581d1ab1ccd0512f32fe33f0
+FROM eclipse-temurin:25.0.3_9-jre-alpine@sha256:28db6fdf60e38945e43d840c0333aeaec66c15943070104f7586fd3c9d1665b0
 
 # @TODO: https://github.com/GoogleCloudPlatform/microservices-demo/issues/2517
 # Download Stackdriver Profiler Java agent

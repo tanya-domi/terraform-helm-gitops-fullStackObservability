@@ -12,9 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM --platform=$BUILDPLATFORM golang:1.23.4-alpine@sha256:c23339199a08b0e12032856908589a6d41a0dab141b8b3b21f156fc571a3f1d3 AS builder
-ARG TARGETOS
-ARG TARGETARCH
+# Define a default value so it's not empty if the builder fails to provide it
+ARG BUILDPLATFORM=linux/amd64
+
+FROM --platform=$BUILDPLATFORM golang:1.26.4-alpine@sha256:3ad57304ad93bbec8548a0437ad9e06a455660655d9af011d58b993f6f615648 AS builder
+ARG TARGETOS=linux
+ARG TARGETARCH=amd64
 WORKDIR /src
 
 # restore dependencies
@@ -24,9 +27,9 @@ COPY . .
 
 # Skaffold passes in debug-oriented compiler flags
 ARG SKAFFOLD_GO_GCFLAGS
-RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} CGO_ENABLED=0 go build -gcflags="${SKAFFOLD_GO_GCFLAGS}" -o /go/bin/frontend .
+RUN GOOS=${TARGETOS} GOARCH=${TARGETARCH} CGO_ENABLED=0 go build -ldflags="-s -w" -gcflags="${SKAFFOLD_GO_GCFLAGS}" -o /go/bin/frontend .
 
-FROM scratch
+FROM gcr.io/distroless/static
 WORKDIR /src
 COPY --from=builder /go/bin/frontend /src/server
 COPY ./templates ./templates

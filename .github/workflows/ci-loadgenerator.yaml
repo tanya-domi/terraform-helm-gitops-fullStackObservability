@@ -15,13 +15,6 @@ on:
       - ".github/workflows/reusable-service-ci.yaml"
       - ".github/workflows/ci-loadgenerator.yml"
 
-
-  pull_request:
-    branches: [main]
-    paths:
-      - "apps/loadgenerator/**"
-      - "charts/microservices/loadgenerator/**"
-
 jobs:
   ci:
     uses: ./.github/workflows/reusable-service-ci.yaml

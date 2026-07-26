@@ -15,11 +15,6 @@ on:
       - ".github/workflows/reusable-service-ci.yaml"
       - ".github/workflows/ci-paymentservice.yml"
 
-  pull_request:
-    branches: [main]
-    paths:
-      - "apps/paymentservice/**"
-      - "charts/microservices/paymentservice/**"
 
 jobs:
   ci:

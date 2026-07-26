@@ -12,7 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM --platform=$BUILDPLATFORM node:20.18.1-alpine@sha256:24fb6aa7020d9a20b00d6da6d1714187c45ed00d1eb4adb01395843c338b9372 AS builder
+# Define a default value so it's not empty if the builder fails to provide it
+ARG BUILDPLATFORM=linux/amd64
+
+FROM --platform=$BUILDPLATFORM node:20.20.2-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 AS builder
 
 # Some packages (e.g. @google-cloud/profiler) require additional
 # deps for post-install scripts
@@ -27,7 +30,7 @@ COPY package*.json ./
 
 RUN npm install --only=production
 
-FROM alpine:3.20.3@sha256:1e42bbe2508154c9126d48c2b8a75420c3544343bf86fd041fb7527e017a4b4a
+FROM alpine:3.24.1@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b
 
 RUN apk add --no-cache nodejs
 

@@ -15,11 +15,6 @@ on:
       - ".github/workflows/reusable-service-ci.yaml"
       - ".github/workflows/ci-checkoutservice.yml"
 
-  pull_request:
-    branches: [main]
-    paths:
-      - "apps/checkoutservice/**"
-      - "charts/microservices/checkoutservice/**"
 
 jobs:
   ci:

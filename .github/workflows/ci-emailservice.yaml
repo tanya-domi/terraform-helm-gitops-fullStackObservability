@@ -15,11 +15,6 @@ on:
       - ".github/workflows/reusable-service-ci.yaml"
       - ".github/workflows/ci-emailservice.yml"
 
-  pull_request:
-    branches: [main]
-    paths:
-      - "apps/emailservice/**"
-      - "charts/microservices/emailservice/**"
 
 jobs:
   ci:

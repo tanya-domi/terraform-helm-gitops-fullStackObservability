@@ -1,4 +1,3 @@
-
 # Copyright 2021 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,36 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Define a default value so it's not empty if the builder fails to provide it
+ARG BUILDPLATFORM=linux/amd64
+
 # https://mcr.microsoft.com/product/dotnet/sdk
-# FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0.100-noble@sha256:1f13e67d295e02abdfd187c341f887442bad611eda536766172ced401fc8b9fa AS builder
-# ARG TARGETARCH  
-# WORKDIR /app
-# COPY cartservice.csproj .
-# RUN dotnet restore cartservice.csproj \
-#     -a $TARGETARCH
-# COPY . .
-# RUN dotnet publish cartservice.csproj \
-#     -p:PublishSingleFile=true \
-#     -a $TARGETARCH \
-#     --self-contained true \
-#     -p:PublishTrimmed=true \
-#     -p:TrimMode=full \
-#     -c release \
-#     -o /cartservice
-
-# # https://mcr.microsoft.com/product/dotnet/runtime-deps
-# FROM mcr.microsoft.com/dotnet/runtime-deps:10.0.0-noble-chiseled@sha256:6f7466eda39e24efaf7eab2325e15d776a685d13cc93b4ea0cde9ee4f7982210
-
-# WORKDIR /app
-# COPY --from=builder /cartservice .
-# EXPOSE 7070
-# ENV DOTNET_EnableDiagnostics=0 \
-#     ASPNETCORE_HTTP_PORTS=7070
-# USER 1000
-# ENTRYPOINT ["/app/cartservice"]
-
 FROM --platform=$BUILDPLATFORM mcr.microsoft.com/dotnet/sdk:10.0.100-noble@sha256:c7445f141c04f1a6b454181bd098dcfa606c61ba0bd213d0a702489e5bd4cd71 AS builder
-ARG TARGETARCH
+ARG TARGETARCH=amd64
 WORKDIR /app
 COPY cartservice.csproj .
 RUN dotnet restore cartservice.csproj \
@@ -67,6 +42,3 @@ ENV DOTNET_EnableDiagnostics=0 \
     ASPNETCORE_HTTP_PORTS=7070
 USER 1000
 ENTRYPOINT ["/app/cartservice"]
-
-
-
