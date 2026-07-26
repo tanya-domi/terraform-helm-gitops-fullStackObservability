@@ -160,18 +160,19 @@ jobs:
       - name: Trivy Container Image Scan
         uses: aquasecurity/trivy-action@0.29.0
         with:
-          image-ref: "${{ steps.meta.outputs.image }}@${{ steps.build.outputs.digest }}"
+          version: v0.71.0
+          image-ref: "${{ steps.meta.outputs.image }}:${{ github.sha }}"
           format: table
           severity: HIGH,CRITICAL
           exit-code: "1"
 
       # 9. Keyless Cosign Signing (Sigstore / OIDC)
-      - name: Install Cosign
-        uses: sigstore/cosign-installer@v3.8.1
+      # - name: Install Cosign
+      #   uses: sigstore/cosign-installer@v3.8.1
 
-      - name: Keyless Sign Image
-        run: |
-          cosign sign --yes "${{ steps.meta.outputs.image }}@${{ steps.build.outputs.digest }}"
+      # - name: Keyless Sign Image
+      #   run: |
+      #     cosign sign --yes "${{ steps.meta.outputs.image }}@${{ steps.build.outputs.digest }}"
 
       # 10. GCP Binary Authorization Attestation
       - name: Setup gcloud CLI
