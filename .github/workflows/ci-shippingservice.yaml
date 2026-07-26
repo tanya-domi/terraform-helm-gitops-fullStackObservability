@@ -15,6 +15,12 @@ on:
       - ".github/workflows/reusable-service-ci.yaml"
       - ".github/workflows/ci-shippingservice.yml"
 
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/shippingservice/**"
+      - "charts/microservices/shippingservice/**"
+
 jobs:
   ci:
     uses: ./.github/workflows/reusable-service-ci.yaml

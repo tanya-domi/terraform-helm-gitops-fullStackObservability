@@ -135,11 +135,11 @@ jobs:
         env:
           TRIVY_CACHE_DIR: /tmp/trivy
         with:
-          version: v0.71.0
+          trivy-version: 'v0.71.0'
           image-ref: "${{ steps.meta.outputs.image }}:${{ github.sha }}"
-          format: table
-          severity: HIGH,CRITICAL
-          exit-code: "1"
+          format: 'table'
+          severity: 'HIGH,CRITICAL'
+          exit-code: '1'
 
       - name: Push image
         id: push

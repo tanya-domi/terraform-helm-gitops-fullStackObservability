@@ -15,6 +15,12 @@ on:
       - ".github/workflows/reusable-service-ci.yaml"
       - ".github/workflows/ci-frontend.yml"
 
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/frontend/**"
+      - "charts/microservices/frontend/**"
+
 jobs:
   ci:
     uses: ./.github/workflows/reusable-service-ci.yaml

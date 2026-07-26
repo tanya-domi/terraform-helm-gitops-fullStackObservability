@@ -15,6 +15,12 @@ on:
       - ".github/workflows/reusable-service-ci.yaml"
       - ".github/workflows/ci-recommendationservice.yml"
 
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/recommendationservice/**"
+      - "charts/microservices/recommendationservice/**"
+
 jobs:
   ci:
     uses: ./.github/workflows/reusable-service-ci.yaml

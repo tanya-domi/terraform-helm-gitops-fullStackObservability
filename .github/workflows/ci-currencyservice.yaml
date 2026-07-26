@@ -15,6 +15,12 @@ on:
       - ".github/workflows/reusable-service-ci.yaml"
       - ".github/workflows/ci-currencyservice.yml"
 
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/currencyservice/**"
+      - "charts/microservices/currencyservice/**"
+
 jobs:
   ci:
     uses: ./.github/workflows/reusable-service-ci.yaml

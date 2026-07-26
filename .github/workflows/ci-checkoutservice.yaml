@@ -1,4 +1,4 @@
-name: CI emailservice
+name: CI checkoutservice
 
 permissions:
   contents: write
@@ -10,10 +10,16 @@ on:
   push:
     branches: [main]
     paths:
-      - "apps/emailservice/**"
-      - "charts/microservices/emailservice/**"
+      - "apps/checkoutservice/**"
+      - "charts/microservices/checkoutservice/**"
       - ".github/workflows/reusable-service-ci.yaml"
-      - ".github/workflows/ci-emailservice.yml"
+      - ".github/workflows/ci-checkoutservice.yml"
+
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/checkoutservice/**"
+      - "charts/microservices/checkoutservice/**"
 
 jobs:
   ci:
