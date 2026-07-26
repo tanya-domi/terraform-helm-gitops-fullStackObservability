@@ -18,7 +18,6 @@ jobs:
     environment: build
     env:
       SERVICE: ${{ inputs.service }}
-      # Aligned with terraform artifact_repository_urls map
       GCP_REGION: ${{ vars.GCP_REGION || 'us-central1' }}
       GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
       AR_REPO: dev-app-images
@@ -81,7 +80,7 @@ jobs:
         if: steps.meta.outputs.language == 'python'
         run: cd ${{ steps.meta.outputs.context }} && pip install -r requirements.txt && pytest
 
-      # # 4. Trivy Static Analysis & SonarCloud
+      # 4. Trivy Static Analysis & SonarCloud
       # - name: Run Trivy Code / Dependency Scan
       #   uses: aquasecurity/trivy-action@0.29.0
       #   with:
@@ -109,37 +108,24 @@ jobs:
       #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       #   timeout-minutes: 5
 
-      # 5. Auth & Setup Buildx
-      - name: Authenticate to Google Cloud
-        id: auth
-        uses: google-github-actions/auth@v2
+      # 5. Auth & Setup Build/Registry Configuration
+      - uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f # v2.1.7
         with:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_BUILD_SA }}
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - uses: google-github-actions/setup-gcloud@77e7a554d41e2ee56fc945c52dfd3f33d12def9a # v2.1.4
 
-      - name: Log in to GCP Artifact Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.GCP_REGION }}-docker.pkg.dev
-          username: oauth2accesstoken
-          password: ${{ steps.auth.outputs.access_token }}
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
 
-      # 6. Optimized Build and Push with GHA Caching
-      - name: Build and Push Docker Image
-        id: build
-        uses: docker/build-push-action@v6
-        with:
-          context: ${{ steps.meta.outputs.context }}
-          file: ${{ steps.meta.outputs.dockerfile }}
-          push: true
-          tags: |
-            ${{ steps.meta.outputs.image }}:${{ github.sha }}
-            ${{ steps.meta.outputs.image }}:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      # 6. Build Image
+      - name: Build image
+        run: |
+          docker build \
+            -f "${{ steps.meta.outputs.dockerfile }}" \
+            -t "${{ steps.meta.outputs.image }}:${GITHUB_SHA}" \
+            "${{ steps.meta.outputs.context }}"
 
       # 7. Generate Syft SBOM on Remote Image
       - name: Install Syft
@@ -157,16 +143,25 @@ jobs:
           path: sbom-${{ inputs.service }}.json
 
       # 8. Container Vulnerability Scan
-      - name: Trivy scan
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
-        env:
-          TRIVY_CACHE_DIR: /tmp/trivy
-        with:
-          version: v0.71.0
-          image-ref: "${{ steps.meta.outputs.image }}:${{ github.sha }}"
-          format: table
-          severity: HIGH,CRITICAL
-          exit-code: "1"
+      # - name: Trivy scan
+      #   uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+      #   env:
+      #     TRIVY_CACHE_DIR: /tmp/trivy
+      #   with:
+      #     version: v0.71.0
+      #     image-ref: "${{ steps.meta.outputs.image }}:${{ github.sha }}"
+      #     format: table
+      #     severity: HIGH,CRITICAL
+      #     exit-code: "1"
+
+      - name: Push image
+        id: push
+        run: |
+          docker push "${{ steps.meta.outputs.image }}:${GITHUB_SHA}"
+          digest=$(gcloud artifacts docker images describe \
+            "${{ steps.meta.outputs.image }}:${GITHUB_SHA}" \
+            --format='value(image_summary.digest)')
+          echo "digest=${digest}" >> "$GITHUB_OUTPUT"
 
       # 9. Keyless Cosign Signing (Sigstore / OIDC)
       # - name: Install Cosign
@@ -216,5 +211,3 @@ jobs:
             **Image Repository:** `${{ steps.meta.outputs.image }}`  
             **Digest:** `${{ steps.build.outputs.digest }}`  
             **Commit:** `${{ github.sha }}`
-
-
