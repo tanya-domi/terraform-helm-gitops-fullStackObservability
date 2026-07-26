@@ -333,11 +333,18 @@ resource "google_project_iam_member" "project_artifact_admin" {
   member  = "serviceAccount:${google_service_account.app_promoter.email}"
 }
 
+# Allow Build CI SA to mint short-lived tokens for gcloud docker credential helper
+resource "google_service_account_iam_member" "app_pusher_token_creator" {
+  service_account_id = google_service_account.app_pusher.name
+  role               = "roles/iam.serviceAccountTokenCreator"
+  member             = "serviceAccount:${google_service_account.app_pusher.email}"
+}
+
 # Authorize the OIDC principal group pool directly on the bucket 
 resource "google_storage_bucket_iam_member" "infra_state_wif_admin" {
   bucket = google_storage_bucket.terraform_state.name
   role   = "roles/storage.objectAdmin"
-  member = local.infra_wif_member # Optimized to use your clean local variable
+  member = local.infra_wif_member 
 }
 
 # ==============================================================================
