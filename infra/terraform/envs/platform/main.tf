@@ -1,33 +1,53 @@
-data "terraform_remote_state" "foundation" {
-  backend = "gcs" # Or local, depending on your backend config
-  config = {
-    bucket = "your-terraform-state-bucket"
-    prefix = "foundation/state"
-  }
+# ==============================================================================
+# 1. GCP IAM & WORKLOAD IDENTITY SETUP
+# ==============================================================================
+
+# Service Account for ArgoCD Repo Server
+resource "google_service_account" "argocd_repo_server" {
+  project      = var.project_id
+  account_id   = "argocd-repo-server-sa"
+  display_name = "ArgoCD Repo Server Service Account"
 }
 
-provider "google" { region = var.region }
-
-provider "kubernetes" {
-  host                   = data.terraform_remote_state.foundation.outputs.cluster_endpoint
-  token                  = data.google_client_config.default.access_token
-  cluster_ca_certificate = base64decode(data.terraform_remote_state.foundation.outputs.cluster_ca_certificate)
+# Service Account for ArgoCD Image Updater
+resource "google_service_account" "argocd_image_updater" {
+  project      = var.project_id
+  account_id   = "argocd-image-updater-sa"
+  display_name = "ArgoCD Image Updater Service Account"
 }
 
-provider "helm" {
-  kubernetes {
-    host                   = data.terraform_remote_state.foundation.outputs.cluster_endpoint
-    token                  = data.google_client_config.default.access_token
-    cluster_ca_certificate = base64decode(data.terraform_remote_state.foundation.outputs.cluster_ca_certificate)
-  }
+# Grant Artifact Registry Reader to Repo Server
+resource "google_project_iam_member" "argocd_artifact_reader" {
+  project = var.project_id
+  role    = "roles/artifactregistry.reader"
+  member  = "serviceAccount:${google_service_account.argocd_repo_server.email}"
 }
 
-data "google_client_config" "default" {}
+# Grant Artifact Registry Reader to Image Updater
+resource "google_project_iam_member" "updater_artifact_reader" {
+  project = var.project_id
+  role    = "roles/artifactregistry.reader"
+  member  = "serviceAccount:${google_service_account.argocd_image_updater.email}"
+}
 
+# Workload Identity Handshake for ArgoCD Repo Server
+resource "google_service_account_iam_member" "argocd_workload_identity" {
+  service_account_id = google_service_account.argocd_repo_server.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "serviceAccount:${var.project_id}.svc.id.goog[argocd/argocd-repo-server]"
+}
+
+# Workload Identity Handshake for ArgoCD Image Updater
+resource "google_service_account_iam_member" "updater_workload_identity" {
+  service_account_id = google_service_account.argocd_image_updater.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "serviceAccount:${var.project_id}.svc.id.goog[argocd/argocd-image-updater]"
+}
 
 # ==============================================================================
-# ArgoCD Core GitOps Engine Bootstrap Lifecycle
+# 2. HELM RELEASE: ARGOCD
 # ==============================================================================
+
 resource "helm_release" "argocd" {
   name             = "argocd"
   repository       = "https://argoproj.github.io/argo-helm"
@@ -42,9 +62,35 @@ resource "helm_release" "argocd" {
     })
   ]
 
-#   depends_on = [module.gke]
-  depends_on = [data.terraform_remote_state.foundation]
+  depends_on = [
+    google_service_account_iam_member.argocd_workload_identity
+  ]
 }
+
+# ==============================================================================
+# 3. KUBERNETES CONFIGMAP: GCP AUTH SCRIPT
+# ==============================================================================
+
+resource "kubernetes_config_map_v1" "auth_cm" {
+  metadata {
+    name      = "auth-cm"
+    namespace = "argocd"
+  }
+
+  data = {
+    "gcp-auth.sh" = <<-EOF
+      #!/bin/sh
+      ACCESS_TOKEN=$(wget --header 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token -q -O - | grep -Eo '"access_token":.*?[^\\]",' | cut -d '"' -f 4)
+      echo "oauth2accesstoken:$ACCESS_TOKEN"
+    EOF
+  }
+
+  depends_on = [helm_release.argocd]
+}
+
+# ==============================================================================
+# 4. HELM RELEASE: ARGOCD IMAGE UPDATER
+# ==============================================================================
 
 resource "helm_release" "argocd_image_updater" {
   name             = "argocd-image-updater"
@@ -54,24 +100,15 @@ resource "helm_release" "argocd_image_updater" {
   create_namespace = true
   version          = "0.12.3"
 
-  values = [file("${path.module}/values/image-updater.yaml")]
+  values = [
+    templatefile("${path.module}/values/image-updater.yaml", {
+      project_id = var.project_id
+    })
+  ]
 
-  depends_on = [helm_release.argocd]
-}
-
-resource "kubernetes_config_map_v1" "auth_cm" {
-  metadata {
-    name      = "auth-cm"
-    namespace = "argocd"
-  }
-
-  data = {
-    "gcp-auth.sh" = <<EOF
-#!/bin/sh
-ACCESS_TOKEN=$(wget --header 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token -q -O - | grep -Eo '"access_token":.*?[^\\]",' | cut -d '"' -f 4)
-echo "oauth2accesstoken:$ACCESS_TOKEN"
-EOF
-  }
-
-  depends_on = [helm_release.argocd]
+  depends_on = [
+    helm_release.argocd,
+    kubernetes_config_map_v1.auth_cm,
+    google_service_account_iam_member.updater_workload_identity
+  ]
 }

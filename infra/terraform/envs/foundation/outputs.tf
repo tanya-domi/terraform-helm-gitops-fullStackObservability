@@ -43,6 +43,12 @@ output "artifact_repository_urls" {
   description = "OCI container registry targets for building images and pushing Helm charts."
 }
 
+output "cluster_ca_certificate" {
+  description = "Base64 encoded public CA certificate used by the GKE cluster master"
+  sensitive   = true
+  value       = module.gke.ca_certificate
+}
+
 # Automated Workload Identities (CI/CD Pipelines)
 # ==============================================================================
 

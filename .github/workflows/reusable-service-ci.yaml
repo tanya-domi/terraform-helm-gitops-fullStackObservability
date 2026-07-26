@@ -18,16 +18,17 @@ jobs:
     environment: build
     env:
       SERVICE: ${{ inputs.service }}
-      GCP_REGION: ${{ vars.GCP_REGION || 'europe-west1' }}
-      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-      AR_REPO: boutique-dev
+      # Aligned with terraform artifact_repository_urls map
+      GCP_REGION: ${{ vars.GCP_REGION || 'us-central1' }}
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'project-1cdbea51-6334-4e02-967' }}
+      AR_REPO: ${{ vars.AR_REPO || 'dev-app-images' }}
 
     steps:
-      # 1. Developer Push & Checkout
+      # 1. Checkout Code
       - name: Checkout code
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@v4
 
-      # 2. Determine Language & Metadata
+      # 2. Resolve Metadata
       - name: Resolve service metadata
         id: meta
         run: |
@@ -43,7 +44,7 @@ jobs:
           echo "context=${context}" >> "$GITHUB_OUTPUT"
           echo "image=${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${AR_REPO}/${SERVICE}" >> "$GITHUB_OUTPUT"
 
-      # 3 & 4. Restore Dependencies & Unit Tests (Language Specific)
+      # 3. Setup Language Runtimes & Unit Tests
       - name: Setup Go
         if: steps.meta.outputs.language == 'go'
         uses: actions/setup-go@v5
@@ -80,18 +81,17 @@ jobs:
         if: steps.meta.outputs.language == 'python'
         run: cd ${{ steps.meta.outputs.context }} && pip install -r requirements.txt && pytest
 
-      # 5, 6 & 7. Lint, Static Analysis, Dependency Scan
+      # 4. Trivy Static Analysis & SonarCloud
       - name: Run Trivy Code / Dependency Scan
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        uses: aquasecurity/trivy-action@0.29.0
         with:
           scan-type: 'fs'
           scan-ref: '${{ steps.meta.outputs.context }}'
           format: 'table'
           severity: 'HIGH,CRITICAL'
 
-      # 6. Static Code Analysis (SonarCloud)
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarcloud-github-action@v3
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -102,7 +102,6 @@ jobs:
             -Dsonar.projectKey=${{ vars.SONAR_PROJECT_KEY_PREFIX }}_${{ inputs.service }}
             -Dsonar.sources=.
             -Dsonar.exclusions=**/node_modules/**,**/bin/**,**/obj/**,**/*.test.js
-            -Dsonar.python.version=3.11
 
       - name: SonarCloud Quality Gate Check
         uses: sonarsource/sonarcloud-quality-gate-action@v1
@@ -110,91 +109,113 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         timeout-minutes: 5
 
-
-      # 8. Docker Build
+      # 5. Auth & Setup Buildx
       - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f # v2.1.7
+        id: auth
+        uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_BUILD_SA }}
 
-      - uses: google-github-actions/setup-gcloud@77e7a554d41e2ee56fc945c52dfd3f33d12def9a # v2.1.4
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - name: Configure Docker for Artifact Registry
-        run: gcloud auth configure-docker "${GCP_REGION}-docker.pkg.dev" --quiet
+      - name: Log in to GCP Artifact Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.GCP_REGION }}-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
 
-      - name: Build image
+      # 6. Optimized Build and Push with GHA Caching
+      - name: Build and Push Docker Image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ steps.meta.outputs.context }}
+          file: ${{ steps.meta.outputs.dockerfile }}
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.image }}:${{ github.sha }}
+            ${{ steps.meta.outputs.image }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # 7. Generate Syft SBOM on Remote Image
+      - name: Install Syft
+        uses: anchore/sbom-action/download-syft@v0
+
+      - name: Generate SBOM
         run: |
-          docker build \
-            -f "${{ steps.meta.outputs.dockerfile }}" \
-            -t "${{ steps.meta.outputs.image }}:${GITHUB_SHA}" \
-            "${{ steps.meta.outputs.context }}"
-
-      # 9. Generate SBOM
-      - name: Generate SBOM (syft)
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin
-          syft "${{ steps.meta.outputs.image }}:${GITHUB_SHA}" -o cyclonedx-json > "sbom-${SERVICE}.json"
+          syft "${{ steps.meta.outputs.image }}@${{ steps.build.outputs.digest }}" \
+            -o cyclonedx-json > "sbom-${SERVICE}.json"
 
       - name: Upload SBOM Artifact
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # v4.4.0
+        uses: actions/upload-artifact@v4
         with:
           name: sbom-${{ inputs.service }}
           path: sbom-${{ inputs.service }}.json
 
-      # 10. Container Scan
+      # 8. Container Vulnerability Scan
       - name: Trivy Container Image Scan
-        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        uses: aquasecurity/trivy-action@0.29.0
         with:
-          image-ref: "${{ steps.meta.outputs.image }}:${{ github.sha }}"
+          image-ref: "${{ steps.meta.outputs.image }}@${{ steps.build.outputs.digest }}"
           format: table
           severity: HIGH,CRITICAL
           exit-code: "1"
 
-      # 11 & 12. Push Image & Get Digest
-      - name: Push image and get digest
-        id: push
-        run: |
-          docker push "${{ steps.meta.outputs.image }}:${GITHUB_SHA}"
-          digest=$(gcloud artifacts docker images describe \
-            "${{ steps.meta.outputs.image }}:${GITHUB_SHA}" \
-            --format='value(image_summary.digest)')
-          echo "digest=${digest}" >> "$GITHUB_OUTPUT"
+      # 9. Keyless Cosign Signing (Sigstore / OIDC)
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@v3.8.1
 
-      # 13. Cosign Sign
-      - name: Sign image (Cosign)
-        env:
-          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
-          COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+      - name: Keyless Sign Image
         run: |
-          if [ -n "${COSIGN_PRIVATE_KEY}" ]; then
-            curl -fsSL -o /usr/local/bin/cosign https://github.com/sigstore/cosign/releases/download/v2.4.3/cosign-linux-amd64
-            chmod +x /usr/local/bin/cosign
-            cosign sign --yes "${{ steps.meta.outputs.image }}@${{ steps.push.outputs.digest }}"
-          fi
+          cosign sign --yes "${{ steps.meta.outputs.image }}@${{ steps.build.outputs.digest }}"
 
-      # 14. Generate Attestation (Binary Authorization)
+      # 10. GCP Binary Authorization Attestation
+      - name: Setup gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+
       - name: Create Binary Authorization attestation
         run: |
           gcloud beta container binauthz attestations sign-and-create \
-            --artifact-url="${{ steps.meta.outputs.image }}@${{ steps.push.outputs.digest }}" \
+            --artifact-url="${{ steps.meta.outputs.image }}@${{ steps.build.outputs.digest }}" \
             --attestor="boutique-cosign" \
-            --project="${GCP_PROJECT_ID}" || true
+            --project="${GCP_PROJECT_ID}"
 
-      # 15 & 16. Update GitOps Repository & Open Pull Request (Dev Environment)
+      # 11. Robust GitOps Values Patching via yq (Replaces sed)
+      - name: Patch Dev GitOps Values
+        run: |
+          VALUES_FILE="gitops/envs/dev/values-${SERVICE}.yaml"
+          mkdir -p gitops/envs/dev
+          
+          # Initialize YAML structure if file doesn't exist
+          if [ ! -f "$VALUES_FILE" ]; then
+            echo "image:" > "$VALUES_FILE"
+          fi
+
+          yq e -i ".image.repository = \"${GCP_REGION}-docker.pkg.dev/${GCP_PROJECT_ID}/${AR_REPO}/${SERVICE}\"" "$VALUES_FILE"
+          yq e -i ".image.digest = \"${{ steps.build.outputs.digest }}\"" "$VALUES_FILE"
+
+      # 12. Create GitOps Promotion PR
       - name: Update Dev GitOps Values and Open PR
-        uses: peter-evans/create-pull-request@67ccf781d68cd99b580ae25a5c18a1cc84ffff1f # v7
+        uses: peter-evans/create-pull-request@v7
         with:
           branch: "ci/dev-${{ inputs.service }}-${{ github.sha }}"
           title: "ci(${{ inputs.service }}): promote digest to dev"
-          commit-message: "ci(${{ inputs.service }}): update dev digest to ${{ steps.push.outputs.digest }}"
+          commit-message: "ci(${{ inputs.service }}): update dev image and digest to ${{ steps.build.outputs.digest }}"
           add-paths: |
             gitops/envs/dev/values-${{ inputs.service }}.yaml
           body: |
             Automated promotion for `${{ inputs.service }}` to **Dev**.
-            Digest: `${{ steps.push.outputs.digest }}`
+            
+            **Image Repository:** `${{ steps.meta.outputs.image }}`  
+            **Digest:** `${{ steps.build.outputs.digest }}`  
+            **Commit:** `${{ github.sha }}`
 
 
+            
 # name: Reusable Service CI
 
 # on:

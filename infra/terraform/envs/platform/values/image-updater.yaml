@@ -32,4 +32,3 @@ tolerations:
     operator: "Equal"
     value: "monitoring"
     effect: "NoSchedule"
-

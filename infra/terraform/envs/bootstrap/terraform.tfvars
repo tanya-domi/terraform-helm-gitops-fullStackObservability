@@ -8,7 +8,7 @@ bucket     = "tanya-terraform-state"
 # GitHub Workflow Integration Parameters
 
 # Your personal GitHub security access token with repo-write capability
-github_token = ""
+github_token ="" 
 
 
 

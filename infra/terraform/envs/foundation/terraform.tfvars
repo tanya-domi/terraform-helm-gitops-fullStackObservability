@@ -34,17 +34,13 @@ cert_map_name = "boutique-ingress-cert-map"
 #   { cidr_block = "203.0.113.11/32", display_name = "home-old" },
 # ]
 
-# master_authorized_networks = [
-#   { 
-#     cidr_block   = "79.224.162.0/24"
-#     display_name = "wsl-local-machine" 
-#   }
-# ]
-
-
 master_authorized_networks = [
-  { 
-    cidr_block   = "79.224.0.0/14"
-    display_name = "dtag-telekom-dynamic-pool" 
+  {
+    cidr_block   = "79.224.167.62/32"
+    display_name = "my-current-ip"
+  },
+  {
+    cidr_block   = "79.224.0.0/16"
+    display_name = "dtag-home-broadband-pool"
   }
 ]
