@@ -15,6 +15,12 @@ on:
       - ".github/workflows/reusable-service-ci.yaml"
       - ".github/workflows/ci-adservice.yml"
 
+  pull_request:
+    branches: [main]
+    paths:
+      - "apps/adservice/**"
+      - "charts/microservices/adservice/**"
+
 jobs:
   ci:
     uses: ./.github/workflows/reusable-service-ci.yaml
