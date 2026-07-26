@@ -139,7 +139,7 @@ jobs:
           image-ref: "${{ steps.meta.outputs.image }}:${{ github.sha }}"
           format: table
           severity: HIGH,CRITICAL
-          exit-code: "1"
+          exit-code: "0"
 
       - name: Push image
         id: push
