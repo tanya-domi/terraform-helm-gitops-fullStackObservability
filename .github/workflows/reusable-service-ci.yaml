@@ -20,7 +20,7 @@ jobs:
       SERVICE: ${{ inputs.service }}
       # Aligned with terraform artifact_repository_urls map
       GCP_REGION: ${{ vars.GCP_REGION || 'us-central1' }}
-      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID || 'project-1cdbea51-6334-4e02-967' }}
+      GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
       AR_REPO: ${{ vars.AR_REPO || 'dev-app-images' }}
 
     steps:
@@ -215,7 +215,7 @@ jobs:
             **Commit:** `${{ github.sha }}`
 
 
-            
+
 # name: Reusable Service CI
 
 # on:
